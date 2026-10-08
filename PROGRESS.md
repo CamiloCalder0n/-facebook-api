@@ -10,9 +10,9 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - [x] Paso 5 — Rutas API · `feat: registrar endpoints de la API REST`
 - [x] Paso 6 — Servidor y smoke test con curl
 - [x] Paso 7 — (Opcional) Tests automáticos · `test: agregar pruebas feature de la API`
-- [ ] Paso 8 — Pruebas en Postman (guiadas) · `test: validar endpoints en Postman` / `test: exportar colección de Postman`
-- [ ] Paso 9 — Casos de error y ajustes · `fix: corregir errores de validación y almacenamiento`
-- [ ] Paso 10 — README.md · `docs: agregar README del proyecto`
+- [x] Paso 8 — Pruebas en Postman (guiadas) · `test: validar endpoints en Postman` / `test: exportar colección de Postman`
+- [x] Paso 9 — Casos de error y ajustes · `fix: corregir errores de validación y almacenamiento`
+- [x] Paso 10 — README.md · `docs: agregar README del proyecto`
 - [ ] Paso 11 — Checklist final "Dejarlo funcionando"
 
 ## Notas
@@ -26,3 +26,6 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - Paso 6: smoke test con curl OK (7/7 + 404/422/405). El post salió con id=2 porque SQLite AUTOINCREMENT no reutiliza el id 1 del test de tinker; en el Paso 8 se hace migrate:fresh.
 - Decisión: se mantiene `shouldRenderJsonWhen` (api/*) que trae Laravel 13 en bootstrap/app.php; ningún punto del checklist del taller depende del redirect sin Accept. Documentar en README (Paso 10).
 - Paso 7: tests/Feature/PostApiTest.php (9) y CommentApiTest.php (4); php artisan test 15/15, 88 assertions.
+- Paso 8: Postman (no Thunder: CLI y Save To Workspace requieren suscripción). 13 requests (7 éxito + 6 en "Casos De Error"), todas OK; DELETE verificado por terminal (0 archivos, 0 filas). Export v2.1 en facebook-api-postman-collection.json; se fijó base_url=http://127.0.0.1:8000 (Postman exportaba vacío) y key "title" sin espacio en "422 - Sin header Accept". Sin cambios de código → no aplica commit "test: validar endpoints en Postman".
+- Paso 9: sin cambios de código (no aplica commit fix). 7 rutas sin verbos ("like" es sustantivo: el recurso "me gusta"); ningún error responde 200; tests 15/15. Nota para README: en Laravel 10/11, sin `Accept: application/json` un error de validación redirige (302); Laravel 13 trae `shouldRenderJsonWhen` para `api/*` en bootstrap/app.php y responde 422 JSON igual (verificado en Postman con "422 - Sin header Accept"). Se mantiene; el header Accept se envía siempre por buena práctica.
+- Paso 10: README.md (autor Juan Camilo Calderon, individual). Comandos de instalación verificados en frío en un clon temporal: migrate OK, GET /api/posts 200, POST sin title 422.
