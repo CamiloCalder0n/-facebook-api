@@ -8,8 +8,8 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - [x] Paso 3 — Relaciones Eloquent y `$fillable` · `feat: configurar relaciones entre Post, Comment y PostImage`
 - [x] Paso 4 — Controladores · `feat: implementar CRUD y lógica de likes`
 - [x] Paso 5 — Rutas API · `feat: registrar endpoints de la API REST`
-- [ ] Paso 6 — Servidor y smoke test con curl
-- [ ] Paso 7 — (Opcional) Tests automáticos · `test: agregar pruebas feature de la API`
+- [x] Paso 6 — Servidor y smoke test con curl
+- [x] Paso 7 — (Opcional) Tests automáticos · `test: agregar pruebas feature de la API`
 - [ ] Paso 8 — Pruebas en Postman (guiadas) · `test: validar endpoints en Postman` / `test: exportar colección de Postman`
 - [ ] Paso 9 — Casos de error y ajustes · `fix: corregir errores de validación y almacenamiento`
 - [ ] Paso 10 — README.md · `docs: agregar README del proyecto`
@@ -23,3 +23,6 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - Paso 3: $fillable y relaciones (HasMany/BelongsTo) en Post, PostImage y Comment; verificado con tinker, incluida la cascada.
 - Paso 4: PostController (index, show, store, like, destroy + helper addImageUrls) y CommentController (index, store) según el taller; php -l OK.
 - Paso 5: 7 rutas en routes/api.php; se quitó la ruta de ejemplo /api/user (Sanctum) que agregó install:api.
+- Paso 6: smoke test con curl OK (7/7 + 404/422/405). El post salió con id=2 porque SQLite AUTOINCREMENT no reutiliza el id 1 del test de tinker; en el Paso 8 se hace migrate:fresh.
+- Decisión: se mantiene `shouldRenderJsonWhen` (api/*) que trae Laravel 13 en bootstrap/app.php; ningún punto del checklist del taller depende del redirect sin Accept. Documentar en README (Paso 10).
+- Paso 7: tests/Feature/PostApiTest.php (9) y CommentApiTest.php (4); php artisan test 15/15, 88 assertions.
