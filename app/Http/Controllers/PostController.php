@@ -2,9 +2,90 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Post;
+use App\Models\PostImage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    //
+    public function index()
+    {
+        $posts = Post::with(['images', 'comments'])
+            ->latest()
+            ->get()
+            ->map(fn ($post) => $this->addImageUrls($post));
+
+        return response()->json($posts, 200);
+    }
+
+    public function show($id)
+    {
+        $post = Post::with(['images', 'comments'])->findOrFail($id);
+
+        return response()->json($this->addImageUrls($post), 200);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title'    => 'required|string|max:255',
+            'content'  => 'required|string',
+            'images'   => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $post = Post::create([
+            'title'   => $request->title,
+            'content' => $request->content,
+        ]);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('posts', 'public');
+                PostImage::create([
+                    'post_id'    => $post->id,
+                    'image_path' => $path,
+                ]);
+            }
+        }
+
+        return response()->json($this->addImageUrls($post->load('images')), 201);
+    }
+
+    public function like($id)
+    {
+        $post = Post::findOrFail($id);
+        $post->increment('likes_count');
+
+        return response()->json([
+            'message'     => 'Me gusta añadido correctamente',
+            'likes_count' => $post->refresh()->likes_count,
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        $post = Post::findOrFail($id);
+
+        foreach ($post->images as $image) {
+            Storage::disk('public')->delete($image->image_path);
+        }
+
+        // La BD borra post_images y comments por la FK con cascada
+        $post->delete();
+
+        return response()->json(null, 204);
+    }
+
+    // Agrega la URL pública completa a cada imagen del post
+    private function addImageUrls(Post $post): Post
+    {
+        $post->images->transform(function ($img) {
+            $img->image_url = asset('storage/' . $img->image_path);
+            return $img;
+        });
+
+        return $post;
+    }
 }
