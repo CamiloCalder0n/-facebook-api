@@ -16,8 +16,8 @@ Estado actual del trabajo: ver `PROGRESS.md`.
 
 ## REGLAS DE TRABAJO (obligatorias)
 
-1. **Un paso a la vez, sin pausas innecesarias.** Claude hace cada paso, lo verifica él mismo, hace el commit y sigue con el siguiente. Solo se detiene cuando necesita algo de Cami (decisiones, datos, pruebas en Postman, errores que no pueda resolver). Al final de cada tanda, resumen corto con la verificación.
-2. **Commits los hace Claude** al terminar cada paso, con el mensaje del mapa de commits (Conventional Commits, en español), con la identidad git de Cami y **sin** línea `Co-Authored-By`. **NUNCA `git push`**: eso lo hace Cami.
+1. **Un paso a la vez.** Al terminar cada paso: resume en máx. 5 líneas lo hecho, muestra la verificación, y **DETENTE** esperando mi "siguiente".
+2. **NO ejecutes `git commit` ni `git push`.** Los commits los hago yo. Tú solo `git status` / `git diff --stat` y me dejas el **mensaje de commit sugerido** (formato Conventional Commits, en español, como pide el taller).
 3. **No saltes nada.** Cada paso tiene Tareas + Verificación. Si no puedes verificar algo, dilo explícitamente; no lo marques como hecho.
 4. **No inventes.** Si falta un dato (versión, nombre, credencial), pregúntame.
 5. **Economía de tokens:**
@@ -52,7 +52,7 @@ Principios REST: URL = sustantivo, método = verbo, nada de verbos en URLs; stat
 
 ## Convención de commits
 
-Conventional Commits en español. Los hace Claude al cerrar cada paso (sin Co-Authored-By, sin push). Orden esperado:
+Conventional Commits en español. Los hace Cami, no Claude. Orden esperado:
 
 | # | Mensaje |
 |---|---|
