@@ -7,7 +7,7 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - [x] Paso 2 — Modelos y migraciones · `feat: crear modelos y migraciones para posts, comentarios e imágenes`
 - [x] Paso 3 — Relaciones Eloquent y `$fillable` · `feat: configurar relaciones entre Post, Comment y PostImage`
 - [x] Paso 4 — Controladores · `feat: implementar CRUD y lógica de likes`
-- [ ] Paso 5 — Rutas API · `feat: registrar endpoints de la API REST`
+- [x] Paso 5 — Rutas API · `feat: registrar endpoints de la API REST`
 - [ ] Paso 6 — Servidor y smoke test con curl
 - [ ] Paso 7 — (Opcional) Tests automáticos · `test: agregar pruebas feature de la API`
 - [ ] Paso 8 — Pruebas en Postman (guiadas) · `test: validar endpoints en Postman` / `test: exportar colección de Postman`
@@ -22,3 +22,4 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - Paso 2: 3 migraciones creadas y migradas; FKs con ON DELETE CASCADE; PRAGMA foreign_keys=1 (DB_FOREIGN_KEYS default true en config/database.php).
 - Paso 3: $fillable y relaciones (HasMany/BelongsTo) en Post, PostImage y Comment; verificado con tinker, incluida la cascada.
 - Paso 4: PostController (index, show, store, like, destroy + helper addImageUrls) y CommentController (index, store) según el taller; php -l OK.
+- Paso 5: 7 rutas en routes/api.php; se quitó la ruta de ejemplo /api/user (Sanctum) que agregó install:api.
