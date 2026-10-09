@@ -13,7 +13,7 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - [x] Paso 8 — Pruebas en Postman (guiadas) · `test: validar endpoints en Postman` / `test: exportar colección de Postman`
 - [x] Paso 9 — Casos de error y ajustes · `fix: corregir errores de validación y almacenamiento`
 - [x] Paso 10 — README.md · `docs: agregar README del proyecto`
-- [ ] Paso 11 — Checklist final "Dejarlo funcionando"
+- [x] Paso 11 — Checklist final "Dejarlo funcionando"
 
 ## Notas
 
@@ -29,3 +29,4 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - Paso 8: Postman (no Thunder: CLI y Save To Workspace requieren suscripción). 13 requests (7 éxito + 6 en "Casos De Error"), todas OK; DELETE verificado por terminal (0 archivos, 0 filas). Export v2.1 en facebook-api-postman-collection.json; se fijó base_url=http://127.0.0.1:8000 (Postman exportaba vacío) y key "title" sin espacio en "422 - Sin header Accept". Sin cambios de código → no aplica commit "test: validar endpoints en Postman".
 - Paso 9: sin cambios de código (no aplica commit fix). 7 rutas sin verbos ("like" es sustantivo: el recurso "me gusta"); ningún error responde 200; tests 15/15. Nota para README: en Laravel 10/11, sin `Accept: application/json` un error de validación redirige (302); Laravel 13 trae `shouldRenderJsonWhen` para `api/*` en bootstrap/app.php y responde 422 JSON igual (verificado en Postman con "422 - Sin header Accept"). Se mantiene; el header Accept se envía siempre por buena práctica.
 - Paso 10: README.md (autor Juan Camilo Calderon, individual). Comandos de instalación verificados en frío en un clon temporal: migrate OK, GET /api/posts 200, POST sin title 422.
+- Paso 11: checklist final 12/12 con evidencia real (curl contra el serve de Cami, DELETE borró archivos y filas del post de prueba). Falta solo crear el repo en GitHub y hacer push (lo hace Cami).

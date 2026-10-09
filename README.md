@@ -31,7 +31,7 @@ API RESTful que simula las interacciones básicas de una red social: **publicaci
 
 ```bash
 # 1. Clonar el repositorio
-git clone <URL_DEL_REPO> facebook-api
+git clone https://github.com/CamiloCalder0n/-facebook-api.git facebook-api
 cd facebook-api
 
 # 2. Instalar dependencias
