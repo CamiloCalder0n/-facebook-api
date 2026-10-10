@@ -41,7 +41,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - [x] Paso 3 — Reto 3 · Likes únicos por usuario · `feat: likes únicos por usuario con tabla pivote`
 - [x] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
 - [x] Paso 5 — Reto 4 · Búsqueda · `feat: buscar publicaciones por título o contenido`
-- [ ] Paso 6 — Reto 5 · Correo al comentar · `feat: notificar por correo al dueño del post al comentar`
+- [x] Paso 6 — Reto 5 · Correo al comentar · `feat: notificar por correo al dueño del post al comentar`
 - [ ] Paso 7 — Reto 6 · Versionado · `feat: versionar la API en v1 y agregar v2`
 - [ ] Paso 8 — Reto 7 · Documentación con Scribe · `docs: documentar la API con Scribe`
 - [ ] Paso 9 — Revisión de pruebas · `test: completar pruebas de la parte 2` (si aplica)
@@ -57,3 +57,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - Paso 3: post_user con unique(post_id,user_id) y cascada; Post::likers / User::likedPosts; like 200 / 409 (también ante UniqueConstraintViolationException por carrera); likes_count = conteo real del pivote. LikeApiTest (6). 35/35.
 - Paso 4: index con paginate(10)->through(addImageUrls). Cambia el formato de GET /api/posts (arreglo → objeto con data); test de la Parte 1 actualizado: test_listar_posts (ahora lee data). PaginationApiTest (4). 39/39.
 - Paso 5: ?search= con where agrupado (title OR content) + paginate(10)->withQueryString(). SearchApiTest (4). 43/43.
+- Paso 6: NewCommentMail (markdown mail.new-comment, asunto "Nuevo comentario": título del post, quién comentó y el texto). Se envía al dueño solo si existe y no es quien comenta. Verificado con MAIL_MAILER=log (laravel.log). CommentMailTest (4). 47/47. Pendiente: evidencia en Mailtrap (credenciales solo en el .env de Cami, en el Paso 10).
