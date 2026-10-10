@@ -1,0 +1,1535 @@
+openapi: 3.0.3
+info:
+  title: 'Facebook API · Documentación'
+  description: 'API REST tipo Facebook: publicaciones con imágenes, comentarios, likes por usuario, búsqueda, paginación y autenticación con tokens (Laravel Sanctum).'
+  version: 1.0.0
+servers:
+  -
+    url: 'http://127.0.0.1:8000'
+tags:
+  -
+    name: Autenticación
+    description: "\nRegistro, inicio y cierre de sesión con tokens de Laravel Sanctum."
+  -
+    name: 'Comentarios v1'
+    description: "\nComentarios de las publicaciones."
+  -
+    name: 'Publicaciones v1'
+    description: "\nPublicaciones con imágenes, comentarios y likes (formato v1, también disponible sin prefijo en /api/...)."
+  -
+    name: 'Publicaciones v2'
+    description: "\nFormato v2 con API Resources: autor como objeto, imágenes como {id, url} y comments_count."
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'Obtén el token con <code>POST /api/v1/register</code> o <code>POST /api/v1/login</code> y envíalo en el header <code>Authorization: Bearer {TOKEN}</code>.'
+security:
+  -
+    default: []
+paths:
+  /api/v1/register:
+    post:
+      summary: 'Registrar usuario'
+      operationId: registrarUsuario
+      description: 'Crea una cuenta nueva y devuelve el usuario junto con un token Bearer de Sanctum.'
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user:
+                    name: 'Camilo Calderón'
+                    email: camilo@example.com
+                    updated_at: '2026-10-09T12:00:00.000000Z'
+                    created_at: '2026-10-09T12:00:00.000000Z'
+                    id: 1
+                  token: 1|aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abcd
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: 'Camilo Calderón'
+                      email:
+                        type: string
+                        example: camilo@example.com
+                      updated_at:
+                        type: string
+                        example: '2026-10-09T12:00:00.000000Z'
+                      created_at:
+                        type: string
+                        example: '2026-10-09T12:00:00.000000Z'
+                      id:
+                        type: integer
+                        example: 1
+                  token:
+                    type: string
+                    example: 1|aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abcd
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The email has already been taken.'
+                  errors:
+                    email:
+                      - 'The email has already been taken.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The email has already been taken.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'The email has already been taken.'
+                        items:
+                          type: string
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Nombre del usuario. Máximo 255 caracteres.'
+                  example: 'Camilo Calderón'
+                email:
+                  type: string
+                  description: 'Correo electrónico único.'
+                  example: camilo@example.com
+                password:
+                  type: string
+                  description: 'Contraseña de al menos 8 caracteres.'
+                  example: secreto123
+                password_confirmation:
+                  type: string
+                  description: 'Debe coincidir con password.'
+                  example: secreto123
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+      security: []
+  /api/v1/login:
+    post:
+      summary: 'Iniciar sesión'
+      operationId: iniciarSesin
+      description: 'Valida las credenciales y devuelve el usuario con un token Bearer nuevo.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user:
+                    id: 1
+                    name: 'Camilo Calderón'
+                    email: camilo@example.com
+                    email_verified_at: null
+                    created_at: '2026-10-09T12:00:00.000000Z'
+                    updated_at: '2026-10-09T12:00:00.000000Z'
+                  token: 2|aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abcd
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'Camilo Calderón'
+                      email:
+                        type: string
+                        example: camilo@example.com
+                      email_verified_at:
+                        type: string
+                        example: null
+                        nullable: true
+                      created_at:
+                        type: string
+                        example: '2026-10-09T12:00:00.000000Z'
+                      updated_at:
+                        type: string
+                        example: '2026-10-09T12:00:00.000000Z'
+                  token:
+                    type: string
+                    example: 2|aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abcd
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Credenciales inválidas'
+                properties:
+                  message:
+                    type: string
+                    example: 'Credenciales inválidas'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The email field is required.'
+                  errors:
+                    email:
+                      - 'The email field is required.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The email field is required.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'The email field is required.'
+                        items:
+                          type: string
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: 'Correo electrónico registrado.'
+                  example: camilo@example.com
+                password:
+                  type: string
+                  description: 'Contraseña del usuario.'
+                  example: secreto123
+              required:
+                - email
+                - password
+      security: []
+  /api/v1/logout:
+    post:
+      summary: 'Cerrar sesión'
+      operationId: cerrarSesin
+      description: 'Revoca únicamente el token con el que se hizo la petición.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Sesión cerrada'
+                properties:
+                  message:
+                    type: string
+                    example: 'Sesión cerrada'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+      tags:
+        - Autenticación
+  /api/v1/user:
+    get:
+      summary: 'Usuario autenticado'
+      operationId: usuarioAutenticado
+      description: 'Devuelve los datos del usuario dueño del token.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 1
+                  name: 'Camilo Calderón'
+                  email: camilo@example.com
+                  email_verified_at: null
+                  created_at: '2026-10-09T12:00:00.000000Z'
+                  updated_at: '2026-10-09T12:00:00.000000Z'
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: 'Camilo Calderón'
+                  email:
+                    type: string
+                    example: camilo@example.com
+                  email_verified_at:
+                    type: string
+                    example: null
+                    nullable: true
+                  created_at:
+                    type: string
+                    example: '2026-10-09T12:00:00.000000Z'
+                  updated_at:
+                    type: string
+                    example: '2026-10-09T12:00:00.000000Z'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+      tags:
+        - Autenticación
+  '/api/v1/posts/{id}/comments':
+    get:
+      summary: 'Listar comentarios'
+      operationId: listarComentarios
+      description: 'Devuelve los comentarios de una publicación, del más reciente al más antiguo.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    post_id:
+                      type: integer
+                      example: 1
+                    user_id:
+                      type: integer
+                      example: 2
+                    author:
+                      type: string
+                      example: 'Ana Gómez'
+                    content:
+                      type: string
+                      example: '¡Buena publicación!'
+                    created_at:
+                      type: string
+                      example: '2026-10-09T12:05:00.000000Z'
+                    updated_at:
+                      type: string
+                      example: '2026-10-09T12:05:00.000000Z'
+                example:
+                  -
+                    id: 1
+                    post_id: 1
+                    user_id: 2
+                    author: 'Ana Gómez'
+                    content: '¡Buena publicación!'
+                    created_at: '2026-10-09T12:05:00.000000Z'
+                    updated_at: '2026-10-09T12:05:00.000000Z'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Models\Post] 999'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Models\Post] 999'
+      tags:
+        - 'Comentarios v1'
+      security: []
+    post:
+      summary: 'Crear comentario'
+      operationId: crearComentario
+      description: "Agrega un comentario a la publicación; author se llena con el nombre del usuario autenticado y user_id con su ID.\nSi el comentarista no es el dueño, se envía al dueño del post el correo \"Nuevo comentario\"."
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user_id: 2
+                  author: 'Ana Gómez'
+                  content: '¡Buena publicación!'
+                  post_id: 1
+                  updated_at: '2026-10-09T12:05:00.000000Z'
+                  created_at: '2026-10-09T12:05:00.000000Z'
+                  id: 1
+                properties:
+                  user_id:
+                    type: integer
+                    example: 2
+                  author:
+                    type: string
+                    example: 'Ana Gómez'
+                  content:
+                    type: string
+                    example: '¡Buena publicación!'
+                  post_id:
+                    type: integer
+                    example: 1
+                  updated_at:
+                    type: string
+                    example: '2026-10-09T12:05:00.000000Z'
+                  created_at:
+                    type: string
+                    example: '2026-10-09T12:05:00.000000Z'
+                  id:
+                    type: integer
+                    example: 1
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Models\Post] 999'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Models\Post] 999'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The content field is required.'
+                  errors:
+                    content:
+                      - 'The content field is required.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The content field is required.'
+                  errors:
+                    type: object
+                    properties:
+                      content:
+                        type: array
+                        example:
+                          - 'The content field is required.'
+                        items:
+                          type: string
+      tags:
+        - 'Comentarios v1'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: 'Texto del comentario.'
+                  example: '¡Buena publicación!'
+              required:
+                - content
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'ID de la publicación.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/v1/posts:
+    get:
+      summary: 'Listar publicaciones'
+      operationId: listarPublicaciones
+      description: 'Devuelve las publicaciones más recientes paginadas de a 10, con su autor, imágenes (con image_url) y comentarios.'
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'Número de página.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Número de página.'
+            example: 1
+        -
+          in: query
+          name: search
+          description: 'Filtra por coincidencia en el título o el contenido.'
+          example: hola
+          required: false
+          schema:
+            type: string
+            description: 'Filtra por coincidencia en el título o el contenido.'
+            example: hola
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  current_page: 1
+                  data:
+                    -
+                      id: 1
+                      user_id: 1
+                      title: 'Mi primera publicación'
+                      content: 'Hola a todos'
+                      likes_count: 1
+                      created_at: '2026-10-09T12:00:00.000000Z'
+                      updated_at: '2026-10-09T12:00:00.000000Z'
+                      user:
+                        id: 1
+                        name: 'Camilo Calderón'
+                      images:
+                        -
+                          id: 1
+                          post_id: 1
+                          image_path: posts/foto.jpg
+                          created_at: '2026-10-09T12:00:00.000000Z'
+                          updated_at: '2026-10-09T12:00:00.000000Z'
+                          image_url: 'http://localhost/storage/posts/foto.jpg'
+                      comments:
+                        -
+                          id: 1
+                          post_id: 1
+                          user_id: 2
+                          author: 'Ana Gómez'
+                          content: '¡Buena publicación!'
+                          created_at: '2026-10-09T12:05:00.000000Z'
+                          updated_at: '2026-10-09T12:05:00.000000Z'
+                  first_page_url: 'http://localhost/api/v1/posts?page=1'
+                  from: 1
+                  last_page: 1
+                  last_page_url: 'http://localhost/api/v1/posts?page=1'
+                  links:
+                    -
+                      url: null
+                      label: '&laquo; Previous'
+                      active: false
+                    -
+                      url: 'http://localhost/api/v1/posts?page=1'
+                      label: '1'
+                      active: true
+                    -
+                      url: null
+                      label: 'Next &raquo;'
+                      active: false
+                  next_page_url: null
+                  path: 'http://localhost/api/v1/posts'
+                  per_page: 10
+                  prev_page_url: null
+                  to: 1
+                  total: 1
+                properties:
+                  current_page:
+                    type: integer
+                    example: 1
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        user_id: 1
+                        title: 'Mi primera publicación'
+                        content: 'Hola a todos'
+                        likes_count: 1
+                        created_at: '2026-10-09T12:00:00.000000Z'
+                        updated_at: '2026-10-09T12:00:00.000000Z'
+                        user:
+                          id: 1
+                          name: 'Camilo Calderón'
+                        images:
+                          -
+                            id: 1
+                            post_id: 1
+                            image_path: posts/foto.jpg
+                            created_at: '2026-10-09T12:00:00.000000Z'
+                            updated_at: '2026-10-09T12:00:00.000000Z'
+                            image_url: 'http://localhost/storage/posts/foto.jpg'
+                        comments:
+                          -
+                            id: 1
+                            post_id: 1
+                            user_id: 2
+                            author: 'Ana Gómez'
+                            content: '¡Buena publicación!'
+                            created_at: '2026-10-09T12:05:00.000000Z'
+                            updated_at: '2026-10-09T12:05:00.000000Z'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        user_id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: 'Mi primera publicación'
+                        content:
+                          type: string
+                          example: 'Hola a todos'
+                        likes_count:
+                          type: integer
+                          example: 1
+                        created_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        updated_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: 'Camilo Calderón'
+                        images:
+                          type: array
+                          example:
+                            -
+                              id: 1
+                              post_id: 1
+                              image_path: posts/foto.jpg
+                              created_at: '2026-10-09T12:00:00.000000Z'
+                              updated_at: '2026-10-09T12:00:00.000000Z'
+                              image_url: 'http://localhost/storage/posts/foto.jpg'
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              post_id:
+                                type: integer
+                                example: 1
+                              image_path:
+                                type: string
+                                example: posts/foto.jpg
+                              created_at:
+                                type: string
+                                example: '2026-10-09T12:00:00.000000Z'
+                              updated_at:
+                                type: string
+                                example: '2026-10-09T12:00:00.000000Z'
+                              image_url:
+                                type: string
+                                example: 'http://localhost/storage/posts/foto.jpg'
+                        comments:
+                          type: array
+                          example:
+                            -
+                              id: 1
+                              post_id: 1
+                              user_id: 2
+                              author: 'Ana Gómez'
+                              content: '¡Buena publicación!'
+                              created_at: '2026-10-09T12:05:00.000000Z'
+                              updated_at: '2026-10-09T12:05:00.000000Z'
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              post_id:
+                                type: integer
+                                example: 1
+                              user_id:
+                                type: integer
+                                example: 2
+                              author:
+                                type: string
+                                example: 'Ana Gómez'
+                              content:
+                                type: string
+                                example: '¡Buena publicación!'
+                              created_at:
+                                type: string
+                                example: '2026-10-09T12:05:00.000000Z'
+                              updated_at:
+                                type: string
+                                example: '2026-10-09T12:05:00.000000Z'
+                  first_page_url:
+                    type: string
+                    example: 'http://localhost/api/v1/posts?page=1'
+                  from:
+                    type: integer
+                    example: 1
+                  last_page:
+                    type: integer
+                    example: 1
+                  last_page_url:
+                    type: string
+                    example: 'http://localhost/api/v1/posts?page=1'
+                  links:
+                    type: array
+                    example:
+                      -
+                        url: null
+                        label: '&laquo; Previous'
+                        active: false
+                      -
+                        url: 'http://localhost/api/v1/posts?page=1'
+                        label: '1'
+                        active: true
+                      -
+                        url: null
+                        label: 'Next &raquo;'
+                        active: false
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          example: null
+                          nullable: true
+                        label:
+                          type: string
+                          example: '&laquo; Previous'
+                        active:
+                          type: boolean
+                          example: false
+                  next_page_url:
+                    type: string
+                    example: null
+                    nullable: true
+                  path:
+                    type: string
+                    example: 'http://localhost/api/v1/posts'
+                  per_page:
+                    type: integer
+                    example: 10
+                  prev_page_url:
+                    type: string
+                    example: null
+                    nullable: true
+                  to:
+                    type: integer
+                    example: 1
+                  total:
+                    type: integer
+                    example: 1
+      tags:
+        - 'Publicaciones v1'
+      security: []
+    post:
+      summary: 'Crear publicación'
+      operationId: crearPublicacin
+      description: 'Crea una publicación a nombre del usuario autenticado. Las imágenes se envían como multipart/form-data.'
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user_id: 1
+                  title: 'Mi primera publicación'
+                  content: 'Hola a todos'
+                  updated_at: '2026-10-09T12:00:00.000000Z'
+                  created_at: '2026-10-09T12:00:00.000000Z'
+                  id: 1
+                  user:
+                    id: 1
+                    name: 'Camilo Calderón'
+                  images:
+                    -
+                      id: 1
+                      post_id: 1
+                      image_path: posts/foto.jpg
+                      created_at: '2026-10-09T12:00:00.000000Z'
+                      updated_at: '2026-10-09T12:00:00.000000Z'
+                      image_url: 'http://localhost/storage/posts/foto.jpg'
+                properties:
+                  user_id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: 'Mi primera publicación'
+                  content:
+                    type: string
+                    example: 'Hola a todos'
+                  updated_at:
+                    type: string
+                    example: '2026-10-09T12:00:00.000000Z'
+                  created_at:
+                    type: string
+                    example: '2026-10-09T12:00:00.000000Z'
+                  id:
+                    type: integer
+                    example: 1
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'Camilo Calderón'
+                  images:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        post_id: 1
+                        image_path: posts/foto.jpg
+                        created_at: '2026-10-09T12:00:00.000000Z'
+                        updated_at: '2026-10-09T12:00:00.000000Z'
+                        image_url: 'http://localhost/storage/posts/foto.jpg'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        post_id:
+                          type: integer
+                          example: 1
+                        image_path:
+                          type: string
+                          example: posts/foto.jpg
+                        created_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        updated_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        image_url:
+                          type: string
+                          example: 'http://localhost/storage/posts/foto.jpg'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The title field is required.'
+                  errors:
+                    title:
+                      - 'The title field is required.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The title field is required.'
+                  errors:
+                    type: object
+                    properties:
+                      title:
+                        type: array
+                        example:
+                          - 'The title field is required.'
+                        items:
+                          type: string
+      tags:
+        - 'Publicaciones v1'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: 'Título. Máximo 255 caracteres.'
+                  example: 'Mi primera publicación'
+                content:
+                  type: string
+                  description: 'Contenido de la publicación.'
+                  example: 'Hola a todos'
+                images:
+                  type: array
+                  description: 'Imágenes opcionales (jpeg, png, jpg o gif; máximo 2 MB cada una).'
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - title
+                - content
+  '/api/v1/posts/{id}':
+    get:
+      summary: 'Ver publicación'
+      operationId: verPublicacin
+      description: 'Devuelve una publicación con su autor, imágenes (con image_url) y comentarios.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 1
+                  user_id: 1
+                  title: 'Mi primera publicación'
+                  content: 'Hola a todos'
+                  likes_count: 1
+                  created_at: '2026-10-09T12:00:00.000000Z'
+                  updated_at: '2026-10-09T12:00:00.000000Z'
+                  user:
+                    id: 1
+                    name: 'Camilo Calderón'
+                  images:
+                    -
+                      id: 1
+                      post_id: 1
+                      image_path: posts/foto.jpg
+                      created_at: '2026-10-09T12:00:00.000000Z'
+                      updated_at: '2026-10-09T12:00:00.000000Z'
+                      image_url: 'http://localhost/storage/posts/foto.jpg'
+                  comments:
+                    -
+                      id: 1
+                      post_id: 1
+                      user_id: 2
+                      author: 'Ana Gómez'
+                      content: '¡Buena publicación!'
+                      created_at: '2026-10-09T12:05:00.000000Z'
+                      updated_at: '2026-10-09T12:05:00.000000Z'
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  user_id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: 'Mi primera publicación'
+                  content:
+                    type: string
+                    example: 'Hola a todos'
+                  likes_count:
+                    type: integer
+                    example: 1
+                  created_at:
+                    type: string
+                    example: '2026-10-09T12:00:00.000000Z'
+                  updated_at:
+                    type: string
+                    example: '2026-10-09T12:00:00.000000Z'
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'Camilo Calderón'
+                  images:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        post_id: 1
+                        image_path: posts/foto.jpg
+                        created_at: '2026-10-09T12:00:00.000000Z'
+                        updated_at: '2026-10-09T12:00:00.000000Z'
+                        image_url: 'http://localhost/storage/posts/foto.jpg'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        post_id:
+                          type: integer
+                          example: 1
+                        image_path:
+                          type: string
+                          example: posts/foto.jpg
+                        created_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        updated_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        image_url:
+                          type: string
+                          example: 'http://localhost/storage/posts/foto.jpg'
+                  comments:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        post_id: 1
+                        user_id: 2
+                        author: 'Ana Gómez'
+                        content: '¡Buena publicación!'
+                        created_at: '2026-10-09T12:05:00.000000Z'
+                        updated_at: '2026-10-09T12:05:00.000000Z'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        post_id:
+                          type: integer
+                          example: 1
+                        user_id:
+                          type: integer
+                          example: 2
+                        author:
+                          type: string
+                          example: 'Ana Gómez'
+                        content:
+                          type: string
+                          example: '¡Buena publicación!'
+                        created_at:
+                          type: string
+                          example: '2026-10-09T12:05:00.000000Z'
+                        updated_at:
+                          type: string
+                          example: '2026-10-09T12:05:00.000000Z'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Models\Post] 999'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Models\Post] 999'
+      tags:
+        - 'Publicaciones v1'
+      security: []
+    delete:
+      summary: 'Eliminar publicación'
+      operationId: eliminarPublicacin
+      description: 'Elimina la publicación junto con sus imágenes y comentarios. Solo el dueño puede eliminarla.'
+      parameters: []
+      responses:
+        204:
+          description: Eliminada
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ''
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Models\Post] 999'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Models\Post] 999'
+      tags:
+        - 'Publicaciones v1'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'ID de la publicación.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  '/api/v1/posts/{id}/like':
+    post:
+      summary: 'Dar like'
+      operationId: darLike
+      description: 'Registra el like del usuario autenticado. Cada usuario puede dar un solo like por publicación.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Me gusta añadido correctamente'
+                  likes_count: 1
+                properties:
+                  message:
+                    type: string
+                    example: 'Me gusta añadido correctamente'
+                  likes_count:
+                    type: integer
+                    example: 1
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Models\Post] 999'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Models\Post] 999'
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Ya diste like a esta publicación'
+                  likes_count: 1
+                properties:
+                  message:
+                    type: string
+                    example: 'Ya diste like a esta publicación'
+                  likes_count:
+                    type: integer
+                    example: 1
+      tags:
+        - 'Publicaciones v1'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'ID de la publicación.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/v2/posts:
+    get:
+      summary: 'Listar publicaciones (v2)'
+      operationId: listarPublicacionesv2
+      description: 'Devuelve las publicaciones más recientes paginadas de a 10 en formato v2.'
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'Número de página.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Número de página.'
+            example: 1
+        -
+          in: query
+          name: search
+          description: 'Filtra por coincidencia en el título o el contenido.'
+          example: hola
+          required: false
+          schema:
+            type: string
+            description: 'Filtra por coincidencia en el título o el contenido.'
+            example: hola
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 1
+                      title: 'Mi primera publicación'
+                      content: 'Hola a todos'
+                      author:
+                        id: 1
+                        name: 'Camilo Calderón'
+                      images:
+                        -
+                          id: 1
+                          url: 'http://localhost/storage/posts/foto.jpg'
+                      likes_count: 1
+                      comments_count: 1
+                      created_at: '2026-10-09T12:00:00.000000Z'
+                      updated_at: '2026-10-09T12:00:00.000000Z'
+                  links:
+                    first: 'http://localhost/api/v2/posts?page=1'
+                    last: 'http://localhost/api/v2/posts?page=1'
+                    prev: null
+                    next: null
+                  meta:
+                    current_page: 1
+                    from: 1
+                    last_page: 1
+                    links:
+                      -
+                        url: null
+                        label: '&laquo; Previous'
+                        active: false
+                      -
+                        url: 'http://localhost/api/v2/posts?page=1'
+                        label: '1'
+                        active: true
+                      -
+                        url: null
+                        label: 'Next &raquo;'
+                        active: false
+                    path: 'http://localhost/api/v2/posts'
+                    per_page: 10
+                    to: 1
+                    total: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        title: 'Mi primera publicación'
+                        content: 'Hola a todos'
+                        author:
+                          id: 1
+                          name: 'Camilo Calderón'
+                        images:
+                          -
+                            id: 1
+                            url: 'http://localhost/storage/posts/foto.jpg'
+                        likes_count: 1
+                        comments_count: 1
+                        created_at: '2026-10-09T12:00:00.000000Z'
+                        updated_at: '2026-10-09T12:00:00.000000Z'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: 'Mi primera publicación'
+                        content:
+                          type: string
+                          example: 'Hola a todos'
+                        author:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: 'Camilo Calderón'
+                        images:
+                          type: array
+                          example:
+                            -
+                              id: 1
+                              url: 'http://localhost/storage/posts/foto.jpg'
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              url:
+                                type: string
+                                example: 'http://localhost/storage/posts/foto.jpg'
+                        likes_count:
+                          type: integer
+                          example: 1
+                        comments_count:
+                          type: integer
+                          example: 1
+                        created_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                        updated_at:
+                          type: string
+                          example: '2026-10-09T12:00:00.000000Z'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: 'http://localhost/api/v2/posts?page=1'
+                      last:
+                        type: string
+                        example: 'http://localhost/api/v2/posts?page=1'
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      from:
+                        type: integer
+                        example: 1
+                      last_page:
+                        type: integer
+                        example: 1
+                      links:
+                        type: array
+                        example:
+                          -
+                            url: null
+                            label: '&laquo; Previous'
+                            active: false
+                          -
+                            url: 'http://localhost/api/v2/posts?page=1'
+                            label: '1'
+                            active: true
+                          -
+                            url: null
+                            label: 'Next &raquo;'
+                            active: false
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              example: null
+                              nullable: true
+                            label:
+                              type: string
+                              example: '&laquo; Previous'
+                            active:
+                              type: boolean
+                              example: false
+                      path:
+                        type: string
+                        example: 'http://localhost/api/v2/posts'
+                      per_page:
+                        type: integer
+                        example: 10
+                      to:
+                        type: integer
+                        example: 1
+                      total:
+                        type: integer
+                        example: 1
+      tags:
+        - 'Publicaciones v2'
+      security: []
+  '/api/v2/posts/{id}':
+    get:
+      summary: 'Ver publicación (v2)'
+      operationId: verPublicacinv2
+      description: 'Devuelve una publicación en formato v2.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    title: 'Mi primera publicación'
+                    content: 'Hola a todos'
+                    author:
+                      id: 1
+                      name: 'Camilo Calderón'
+                    images:
+                      -
+                        id: 1
+                        url: 'http://localhost/storage/posts/foto.jpg'
+                    likes_count: 1
+                    comments_count: 1
+                    created_at: '2026-10-09T12:00:00.000000Z'
+                    updated_at: '2026-10-09T12:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: 'Mi primera publicación'
+                      content:
+                        type: string
+                        example: 'Hola a todos'
+                      author:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: 'Camilo Calderón'
+                      images:
+                        type: array
+                        example:
+                          -
+                            id: 1
+                            url: 'http://localhost/storage/posts/foto.jpg'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            url:
+                              type: string
+                              example: 'http://localhost/storage/posts/foto.jpg'
+                      likes_count:
+                        type: integer
+                        example: 1
+                      comments_count:
+                        type: integer
+                        example: 1
+                      created_at:
+                        type: string
+                        example: '2026-10-09T12:00:00.000000Z'
+                      updated_at:
+                        type: string
+                        example: '2026-10-09T12:00:00.000000Z'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Models\Post] 999'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Models\Post] 999'
+      tags:
+        - 'Publicaciones v2'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'ID de la publicación.'
+        example: 1
+        required: true
+        schema:
+          type: integer

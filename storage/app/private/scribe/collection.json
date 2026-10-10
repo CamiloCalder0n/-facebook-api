@@ -1,0 +1,707 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "http:\/\/127.0.0.1:8000"
+        }
+    ],
+    "info": {
+        "name": "Facebook API \u00b7 Documentaci\u00f3n",
+        "_postman_id": "5f6905f5-a145-4300-ab40-7d5c487be57b",
+        "description": "API REST tipo Facebook: publicaciones con im\u00e1genes, comentarios, likes por usuario, b\u00fasqueda, paginaci\u00f3n y autenticaci\u00f3n con tokens (Laravel Sanctum).",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Autenticaci\u00f3n",
+            "description": "\nRegistro, inicio y cierre de sesi\u00f3n con tokens de Laravel Sanctum.",
+            "item": [
+                {
+                    "name": "Registrar usuario",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/register",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/register"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Camilo Calder\u00f3n\",\"email\":\"camilo@example.com\",\"password\":\"secreto123\",\"password_confirmation\":\"secreto123\"}"
+                        },
+                        "description": "Crea una cuenta nueva y devuelve el usuario junto con un token Bearer de Sanctum.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"user\": {\"name\": \"Camilo Calder\u00f3n\", \"email\": \"camilo@example.com\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"id\": 1}, \"token\": \"1|aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abcd\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"The email has already been taken.\", \"errors\": {\"email\": [\"The email has already been taken.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Iniciar sesi\u00f3n",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/login",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/login"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"camilo@example.com\",\"password\":\"secreto123\"}"
+                        },
+                        "description": "Valida las credenciales y devuelve el usuario con un token Bearer nuevo.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"user\": {\"id\": 1, \"name\": \"Camilo Calder\u00f3n\", \"email\": \"camilo@example.com\", \"email_verified_at\": null, \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\"}, \"token\": \"2|aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789abcd\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Credenciales inv\u00e1lidas\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"The email field is required.\", \"errors\": {\"email\": [\"The email field is required.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Cerrar sesi\u00f3n",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/logout",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/logout"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Revoca \u00fanicamente el token con el que se hizo la petici\u00f3n."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Sesi\u00f3n cerrada\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Usuario autenticado",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/user",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/user"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Devuelve los datos del usuario due\u00f1o del token."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"id\": 1, \"name\": \"Camilo Calder\u00f3n\", \"email\": \"camilo@example.com\", \"email_verified_at\": null, \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Comentarios v1",
+            "description": "\nComentarios de las publicaciones.",
+            "item": [
+                {
+                    "name": "Listar comentarios",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts\/:id\/comments",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts\/:id\/comments",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "ID de la publicaci\u00f3n."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Devuelve los comentarios de una publicaci\u00f3n, del m\u00e1s reciente al m\u00e1s antiguo.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "[{\"id\": 1, \"post_id\": 1, \"user_id\": 2, \"author\": \"Ana G\u00f3mez\", \"content\": \"\u00a1Buena publicaci\u00f3n!\", \"created_at\": \"2026-10-09T12:05:00.000000Z\", \"updated_at\": \"2026-10-09T12:05:00.000000Z\"}]",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"No query results for model [App\\\\Models\\\\Post] 999\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Crear comentario",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts\/:id\/comments",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts\/:id\/comments",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "ID de la publicaci\u00f3n."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"content\":\"\u00a1Buena publicaci\u00f3n!\"}"
+                        },
+                        "description": "Agrega un comentario a la publicaci\u00f3n; author se llena con el nombre del usuario autenticado y user_id con su ID.\nSi el comentarista no es el due\u00f1o, se env\u00eda al due\u00f1o del post el correo \"Nuevo comentario\"."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"user_id\": 2, \"author\": \"Ana G\u00f3mez\", \"content\": \"\u00a1Buena publicaci\u00f3n!\", \"post_id\": 1, \"updated_at\": \"2026-10-09T12:05:00.000000Z\", \"created_at\": \"2026-10-09T12:05:00.000000Z\", \"id\": 1}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Unauthenticated.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"No query results for model [App\\\\Models\\\\Post] 999\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"The content field is required.\", \"errors\": {\"content\": [\"The content field is required.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Publicaciones v1",
+            "description": "\nPublicaciones con im\u00e1genes, comentarios y likes (formato v1, tambi\u00e9n disponible sin prefijo en \/api\/...).",
+            "item": [
+                {
+                    "name": "Listar publicaciones",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "N\u00famero de p\u00e1gina.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "hola",
+                                    "description": "Filtra por coincidencia en el t\u00edtulo o el contenido.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts?page=1&search=hola"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Devuelve las publicaciones m\u00e1s recientes paginadas de a 10, con su autor, im\u00e1genes (con image_url) y comentarios.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"current_page\": 1, \"data\": [{\"id\": 1, \"user_id\": 1, \"title\": \"Mi primera publicaci\u00f3n\", \"content\": \"Hola a todos\", \"likes_count\": 1, \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"user\": {\"id\": 1, \"name\": \"Camilo Calder\u00f3n\"}, \"images\": [{\"id\": 1, \"post_id\": 1, \"image_path\": \"posts\/foto.jpg\", \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"image_url\": \"http:\/\/localhost\/storage\/posts\/foto.jpg\"}], \"comments\": [{\"id\": 1, \"post_id\": 1, \"user_id\": 2, \"author\": \"Ana G\u00f3mez\", \"content\": \"\u00a1Buena publicaci\u00f3n!\", \"created_at\": \"2026-10-09T12:05:00.000000Z\", \"updated_at\": \"2026-10-09T12:05:00.000000Z\"}]}], \"first_page_url\": \"http:\/\/localhost\/api\/v1\/posts?page=1\", \"from\": 1, \"last_page\": 1, \"last_page_url\": \"http:\/\/localhost\/api\/v1\/posts?page=1\", \"links\": [{\"url\": null, \"label\": \"&laquo; Previous\", \"active\": false}, {\"url\": \"http:\/\/localhost\/api\/v1\/posts?page=1\", \"label\": \"1\", \"active\": true}, {\"url\": null, \"label\": \"Next &raquo;\", \"active\": false}], \"next_page_url\": null, \"path\": \"http:\/\/localhost\/api\/v1\/posts\", \"per_page\": 10, \"prev_page_url\": null, \"to\": 1, \"total\": 1}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Ver publicaci\u00f3n",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "ID de la publicaci\u00f3n."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Devuelve una publicaci\u00f3n con su autor, im\u00e1genes (con image_url) y comentarios.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"id\": 1, \"user_id\": 1, \"title\": \"Mi primera publicaci\u00f3n\", \"content\": \"Hola a todos\", \"likes_count\": 1, \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"user\": {\"id\": 1, \"name\": \"Camilo Calder\u00f3n\"}, \"images\": [{\"id\": 1, \"post_id\": 1, \"image_path\": \"posts\/foto.jpg\", \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"image_url\": \"http:\/\/localhost\/storage\/posts\/foto.jpg\"}], \"comments\": [{\"id\": 1, \"post_id\": 1, \"user_id\": 2, \"author\": \"Ana G\u00f3mez\", \"content\": \"\u00a1Buena publicaci\u00f3n!\", \"created_at\": \"2026-10-09T12:05:00.000000Z\", \"updated_at\": \"2026-10-09T12:05:00.000000Z\"}]}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"No query results for model [App\\\\Models\\\\Post] 999\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Crear publicaci\u00f3n",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "title",
+                                    "value": "Mi primera publicaci\u00f3n",
+                                    "type": "text",
+                                    "description": "T\u00edtulo. M\u00e1ximo 255 caracteres."
+                                },
+                                {
+                                    "key": "content",
+                                    "value": "Hola a todos",
+                                    "type": "text",
+                                    "description": "Contenido de la publicaci\u00f3n."
+                                },
+                                {
+                                    "key": "images[]",
+                                    "src": [],
+                                    "type": "file"
+                                }
+                            ]
+                        },
+                        "description": "Crea una publicaci\u00f3n a nombre del usuario autenticado. Las im\u00e1genes se env\u00edan como multipart\/form-data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"user_id\": 1, \"title\": \"Mi primera publicaci\u00f3n\", \"content\": \"Hola a todos\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"id\": 1, \"user\": {\"id\": 1, \"name\": \"Camilo Calder\u00f3n\"}, \"images\": [{\"id\": 1, \"post_id\": 1, \"image_path\": \"posts\/foto.jpg\", \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\", \"image_url\": \"http:\/\/localhost\/storage\/posts\/foto.jpg\"}]}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Unauthenticated.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"The title field is required.\", \"errors\": {\"title\": [\"The title field is required.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Eliminar publicaci\u00f3n",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "ID de la publicaci\u00f3n."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Elimina la publicaci\u00f3n junto con sus im\u00e1genes y comentarios. Solo el due\u00f1o puede eliminarla."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "",
+                            "name": "Eliminada"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Unauthenticated.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"message\": \"This action is unauthorized.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"No query results for model [App\\\\Models\\\\Post] 999\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Dar like",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/posts\/:id\/like",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/posts\/:id\/like",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "ID de la publicaci\u00f3n."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Registra el like del usuario autenticado. Cada usuario puede dar un solo like por publicaci\u00f3n."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Me gusta a\u00f1adido correctamente\", \"likes_count\": 1}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\": \"Unauthenticated.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"No query results for model [App\\\\Models\\\\Post] 999\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 409,
+                            "body": "{\"message\": \"Ya diste like a esta publicaci\u00f3n\", \"likes_count\": 1}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Publicaciones v2",
+            "description": "\nFormato v2 con API Resources: autor como objeto, im\u00e1genes como {id, url} y comments_count.",
+            "item": [
+                {
+                    "name": "Listar publicaciones (v2)",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v2\/posts",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "N\u00famero de p\u00e1gina.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "hola",
+                                    "description": "Filtra por coincidencia en el t\u00edtulo o el contenido.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v2\/posts?page=1&search=hola"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Devuelve las publicaciones m\u00e1s recientes paginadas de a 10 en formato v2.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\": [{\"id\": 1, \"title\": \"Mi primera publicaci\u00f3n\", \"content\": \"Hola a todos\", \"author\": {\"id\": 1, \"name\": \"Camilo Calder\u00f3n\"}, \"images\": [{\"id\": 1, \"url\": \"http:\/\/localhost\/storage\/posts\/foto.jpg\"}], \"likes_count\": 1, \"comments_count\": 1, \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\"}], \"links\": {\"first\": \"http:\/\/localhost\/api\/v2\/posts?page=1\", \"last\": \"http:\/\/localhost\/api\/v2\/posts?page=1\", \"prev\": null, \"next\": null}, \"meta\": {\"current_page\": 1, \"from\": 1, \"last_page\": 1, \"links\": [{\"url\": null, \"label\": \"&laquo; Previous\", \"active\": false}, {\"url\": \"http:\/\/localhost\/api\/v2\/posts?page=1\", \"label\": \"1\", \"active\": true}, {\"url\": null, \"label\": \"Next &raquo;\", \"active\": false}], \"path\": \"http:\/\/localhost\/api\/v2\/posts\", \"per_page\": 10, \"to\": 1, \"total\": 1}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Ver publicaci\u00f3n (v2)",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v2\/posts\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v2\/posts\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "ID de la publicaci\u00f3n."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Devuelve una publicaci\u00f3n en formato v2.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\": {\"id\": 1, \"title\": \"Mi primera publicaci\u00f3n\", \"content\": \"Hola a todos\", \"author\": {\"id\": 1, \"name\": \"Camilo Calder\u00f3n\"}, \"images\": [{\"id\": 1, \"url\": \"http:\/\/localhost\/storage\/posts\/foto.jpg\"}], \"likes_count\": 1, \"comments_count\": 1, \"created_at\": \"2026-10-09T12:00:00.000000Z\", \"updated_at\": \"2026-10-09T12:00:00.000000Z\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"No query results for model [App\\\\Models\\\\Post] 999\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "key",
+                "type": "string"
+            }
+        ]
+    }
+}

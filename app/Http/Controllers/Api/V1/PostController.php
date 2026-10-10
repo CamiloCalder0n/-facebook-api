@@ -10,8 +10,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @group Publicaciones v1
+ *
+ * Publicaciones con imágenes, comentarios y likes (formato v1, también disponible sin prefijo en /api/...).
+ */
 class PostController extends Controller
 {
+    /**
+     * Listar publicaciones
+     *
+     * Devuelve las publicaciones más recientes paginadas de a 10, con su autor, imágenes (con image_url) y comentarios.
+     *
+     * @unauthenticated
+     *
+     * @queryParam page integer Número de página. Example: 1
+     * @queryParam search string Filtra por coincidencia en el título o el contenido. Example: hola
+     *
+     * @response 200 {"current_page": 1, "data": [{"id": 1, "user_id": 1, "title": "Mi primera publicación", "content": "Hola a todos", "likes_count": 1, "created_at": "2026-10-09T12:00:00.000000Z", "updated_at": "2026-10-09T12:00:00.000000Z", "user": {"id": 1, "name": "Camilo Calderón"}, "images": [{"id": 1, "post_id": 1, "image_path": "posts/foto.jpg", "created_at": "2026-10-09T12:00:00.000000Z", "updated_at": "2026-10-09T12:00:00.000000Z", "image_url": "http://localhost/storage/posts/foto.jpg"}], "comments": [{"id": 1, "post_id": 1, "user_id": 2, "author": "Ana Gómez", "content": "¡Buena publicación!", "created_at": "2026-10-09T12:05:00.000000Z", "updated_at": "2026-10-09T12:05:00.000000Z"}]}], "first_page_url": "http://localhost/api/v1/posts?page=1", "from": 1, "last_page": 1, "last_page_url": "http://localhost/api/v1/posts?page=1", "links": [{"url": null, "label": "&laquo; Previous", "active": false}, {"url": "http://localhost/api/v1/posts?page=1", "label": "1", "active": true}, {"url": null, "label": "Next &raquo;", "active": false}], "next_page_url": null, "path": "http://localhost/api/v1/posts", "per_page": 10, "prev_page_url": null, "to": 1, "total": 1}
+     */
     public function index(Request $request)
     {
         // ?search= filtra en SQL por título o contenido; el OR va agrupado en su propio where
@@ -27,6 +44,18 @@ class PostController extends Controller
         return response()->json($posts, 200);
     }
 
+    /**
+     * Ver publicación
+     *
+     * Devuelve una publicación con su autor, imágenes (con image_url) y comentarios.
+     *
+     * @unauthenticated
+     *
+     * @urlParam id integer required ID de la publicación. Example: 1
+     *
+     * @response 200 {"id": 1, "user_id": 1, "title": "Mi primera publicación", "content": "Hola a todos", "likes_count": 1, "created_at": "2026-10-09T12:00:00.000000Z", "updated_at": "2026-10-09T12:00:00.000000Z", "user": {"id": 1, "name": "Camilo Calderón"}, "images": [{"id": 1, "post_id": 1, "image_path": "posts/foto.jpg", "created_at": "2026-10-09T12:00:00.000000Z", "updated_at": "2026-10-09T12:00:00.000000Z", "image_url": "http://localhost/storage/posts/foto.jpg"}], "comments": [{"id": 1, "post_id": 1, "user_id": 2, "author": "Ana Gómez", "content": "¡Buena publicación!", "created_at": "2026-10-09T12:05:00.000000Z", "updated_at": "2026-10-09T12:05:00.000000Z"}]}
+     * @response 404 {"message": "No query results for model [App\\Models\\Post] 999"}
+     */
     public function show($id)
     {
         $post = Post::with(['user:id,name', 'images', 'comments'])->findOrFail($id);
@@ -34,6 +63,21 @@ class PostController extends Controller
         return response()->json($this->addImageUrls($post), 200);
     }
 
+    /**
+     * Crear publicación
+     *
+     * Crea una publicación a nombre del usuario autenticado. Las imágenes se envían como multipart/form-data.
+     *
+     * @authenticated
+     *
+     * @bodyParam title string required Título. Máximo 255 caracteres. Example: Mi primera publicación
+     * @bodyParam content string required Contenido de la publicación. Example: Hola a todos
+     * @bodyParam images file[] Imágenes opcionales (jpeg, png, jpg o gif; máximo 2 MB cada una).
+     *
+     * @response 201 {"user_id": 1, "title": "Mi primera publicación", "content": "Hola a todos", "updated_at": "2026-10-09T12:00:00.000000Z", "created_at": "2026-10-09T12:00:00.000000Z", "id": 1, "user": {"id": 1, "name": "Camilo Calderón"}, "images": [{"id": 1, "post_id": 1, "image_path": "posts/foto.jpg", "created_at": "2026-10-09T12:00:00.000000Z", "updated_at": "2026-10-09T12:00:00.000000Z", "image_url": "http://localhost/storage/posts/foto.jpg"}]}
+     * @response 401 {"message": "Unauthenticated."}
+     * @response 422 {"message": "The title field is required.", "errors": {"title": ["The title field is required."]}}
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -62,6 +106,20 @@ class PostController extends Controller
         return response()->json($this->addImageUrls($post->load(['user:id,name', 'images'])), 201);
     }
 
+    /**
+     * Dar like
+     *
+     * Registra el like del usuario autenticado. Cada usuario puede dar un solo like por publicación.
+     *
+     * @authenticated
+     *
+     * @urlParam id integer required ID de la publicación. Example: 1
+     *
+     * @response 200 {"message": "Me gusta añadido correctamente", "likes_count": 1}
+     * @response 409 {"message": "Ya diste like a esta publicación", "likes_count": 1}
+     * @response 401 {"message": "Unauthenticated."}
+     * @response 404 {"message": "No query results for model [App\\Models\\Post] 999"}
+     */
     public function like(Request $request, $id)
     {
         $post = Post::findOrFail($id);
@@ -95,6 +153,20 @@ class PostController extends Controller
         ], 409);
     }
 
+    /**
+     * Eliminar publicación
+     *
+     * Elimina la publicación junto con sus imágenes y comentarios. Solo el dueño puede eliminarla.
+     *
+     * @authenticated
+     *
+     * @urlParam id integer required ID de la publicación. Example: 1
+     *
+     * @response 204 scenario="Eliminada"
+     * @response 401 {"message": "Unauthenticated."}
+     * @response 403 {"message": "This action is unauthorized."}
+     * @response 404 {"message": "No query results for model [App\\Models\\Post] 999"}
+     */
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
