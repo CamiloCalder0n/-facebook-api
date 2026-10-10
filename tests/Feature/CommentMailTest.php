@@ -6,6 +6,7 @@ use App\Mail\NewCommentMail;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -69,5 +70,20 @@ class CommentMailTest extends TestCase
             ->assertSeeInHtml('Mi viaje')
             ->assertSeeInHtml('Luis')
             ->assertSeeInHtml('¡Qué buenas fotos!');
+    }
+
+    public function test_si_falla_el_correo_el_comentario_igual_devuelve_201(): void
+    {
+        $owner = User::factory()->create();
+        $post = Post::create(['user_id' => $owner->id, 'title' => 'T', 'content' => 'C']);
+        Sanctum::actingAs(User::factory()->create());
+        Exceptions::fake();
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP caído'));
+
+        $this->postJson("/api/posts/{$post->id}/comments", ['content' => 'Hola'])
+            ->assertStatus(201);
+
+        $this->assertDatabaseHas('comments', ['post_id' => $post->id, 'content' => 'Hola']);
+        Exceptions::assertReported(\RuntimeException::class);
     }
 }
