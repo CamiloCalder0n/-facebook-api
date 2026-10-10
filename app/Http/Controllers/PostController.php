@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\PostImage;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -55,15 +56,37 @@ class PostController extends Controller
         return response()->json($this->addImageUrls($post->load(['user:id,name', 'images'])), 201);
     }
 
-    public function like($id)
+    public function like(Request $request, $id)
     {
         $post = Post::findOrFail($id);
-        $post->increment('likes_count');
+        $userId = $request->user()->id;
+
+        if ($post->likers()->whereKey($userId)->exists()) {
+            return $this->likeConflict($post);
+        }
+
+        try {
+            $post->likers()->attach($userId);
+        } catch (UniqueConstraintViolationException) {
+            // Dos peticiones simultáneas del mismo usuario: el índice único frena la segunda
+            return $this->likeConflict($post);
+        }
+
+        // La fuente de verdad es la tabla pivote; likes_count guarda el conteo real
+        $post->update(['likes_count' => $post->likers()->count()]);
 
         return response()->json([
             'message'     => 'Me gusta añadido correctamente',
-            'likes_count' => $post->refresh()->likes_count,
+            'likes_count' => $post->likes_count,
         ], 200);
+    }
+
+    private function likeConflict(Post $post)
+    {
+        return response()->json([
+            'message'     => 'Ya diste like a esta publicación',
+            'likes_count' => $post->likers()->count(),
+        ], 409);
     }
 
     public function destroy($id)
