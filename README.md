@@ -2,6 +2,8 @@
 
 API RESTful que simula las interacciones básicas de una red social: **publicaciones con múltiples imágenes, comentarios y "Me gusta"**. Se validó con Postman y con pruebas automáticas (PHPUnit).
 
+> **Parte 1** (API básica, tag [`parte-1`](https://github.com/CamiloCalder0n/-facebook-api/tree/parte-1)) y **Parte 2** (retos avanzados: autenticación, likes por usuario, paginación, búsqueda, correo, versionado y documentación). Las secciones de Endpoints y Ejemplos describen la Parte 1; los cambios de la Parte 2 están en [Parte 2 · Retos avanzados](#parte-2--retos-avanzados).
+
 | | |
 |---|---|
 | **Autor** | Juan Camilo Calderon (trabajo individual) |
@@ -17,7 +19,8 @@ API RESTful que simula las interacciones básicas de una red social: **publicaci
 - SQLite
 - Eloquent ORM y File Storage (disco `public`)
 - PHPUnit (pruebas feature)
-- Postman (colección exportada en `facebook-api-postman-collection.json`)
+- Postman (colecciones `facebook-api-postman-collection.json` y `facebook-api-parte2-postman-collection.json`)
+- Laravel Sanctum (tokens Bearer) · Scribe (documentación en `/docs`) — Parte 2
 
 ## Requisitos
 
@@ -58,6 +61,8 @@ php artisan serve
 > Opcional: en `.env` puedes poner `APP_NAME="Facebook API"` y `APP_URL=http://127.0.0.1:8000`.
 
 ## Endpoints
+
+> Esta tabla es la de la **Parte 1** (sin autenticación). En la Parte 2 crear, borrar, dar like y comentar piden token, y el listado viene paginado: ver [Parte 2](#parte-2--retos-avanzados).
 
 Todos los endpoints están bajo el prefijo `/api`.
 
@@ -303,6 +308,208 @@ Hay 15 pruebas: 13 de la API en `tests/Feature/PostApiTest.php` y `tests/Feature
   - En Laravel 13, `bootstrap/app.php` trae configurado `shouldRenderJsonWhen` para las rutas `api/*`, así que la API responde **422 en JSON** aunque el cliente no envíe el header. Se comprobó con la request "422 - Sin header Accept".
   - Aun así, todas las requests envían `Accept: application/json` como buena práctica.
 
+## Parte 2 · Retos avanzados
+
+Guía del taller: `docs/Taller_Parte_2_API_REST.md`. Todo cambio de esquema va en migraciones nuevas (las de la Parte 1 no se editaron).
+
+### Modelo de datos (Parte 2)
+
+```mermaid
+erDiagram
+    USERS ||--o{ POSTS : "publica (user_id nullable)"
+    USERS ||--o{ COMMENTS : "escribe (user_id nullable)"
+    POSTS ||--o{ POST_IMAGES : "tiene"
+    POSTS ||--o{ COMMENTS : "tiene"
+    POSTS ||--o{ POST_USER : "likes"
+    USERS ||--o{ POST_USER : "likes"
+    POST_USER {
+        bigint id PK
+        bigint post_id FK "cascade"
+        bigint user_id FK "cascade"
+        timestamp created_at
+        timestamp updated_at
+    }
+```
+
+`post_user` tiene `UNIQUE(post_id, user_id)`: la base de datos también impide un like repetido. `user_id` en `posts` y `comments` es `nullable` porque los registros de la Parte 1 no tienen dueño.
+
+### Autenticación (Reto 1 · Sanctum)
+
+Sanctum ya venía instalado desde la Parte 1 (`php artisan install:api`), por eso **no** se corrió la "Recomendación" del taller: publicar de nuevo su configuración duplica la migración de `personal_access_tokens` y `migrate` falla.
+
+```bash
+# 1. Registrarse (201) o iniciar sesión (200): ambos devuelven un token
+curl -X POST http://127.0.0.1:8000/api/v1/register -H "Accept: application/json" \
+  -d name="Ana" -d email="ana@example.com" -d password="secreto123" -d password_confirmation="secreto123"
+
+curl -X POST http://127.0.0.1:8000/api/v1/login -H "Accept: application/json" \
+  -d email="ana@example.com" -d password="secreto123"
+# {"user":{...},"token":"1|AbCd..."}
+
+# 2. Enviar el token en las rutas protegidas
+curl http://127.0.0.1:8000/api/v1/user -H "Accept: application/json" -H "Authorization: Bearer 1|AbCd..."
+```
+
+- Login con credenciales malas → **401** `{"message":"Credenciales inválidas"}`.
+- Ruta protegida sin token → **401** `{"message":"Unauthenticated."}`.
+- `POST /logout` revoca **solo** el token con el que se hizo la petición.
+- Borrar un post ajeno → **403** (`PostPolicy`). Los posts sin dueño de la Parte 1 no se pueden borrar.
+- Al comentar, `author` se llena con el nombre del usuario autenticado; ya no se envía en el body.
+
+### Endpoints (Parte 2)
+
+Todas las rutas existen en `/api/v1/...` y, con las mismas URLs de la Parte 1, en `/api/...` (alias de v1).
+
+| Método | Ruta | Auth | Éxito | Errores |
+|---|---|---|---|---|
+| POST | `/register` | — | 201 + token | 422 |
+| POST | `/login` | — | 200 + token | 401, 422 |
+| POST | `/logout` | Bearer | 200 | 401 |
+| GET | `/user` | Bearer | 200 | 401 |
+| GET | `/posts?page=&search=` | — | 200 (paginado) | — |
+| GET | `/posts/{id}` | — | 200 | 404 |
+| POST | `/posts` | Bearer | 201 | 401, 422 |
+| DELETE | `/posts/{id}` | Bearer (solo dueño) | 204 | 401, 403, 404 |
+| POST | `/posts/{id}/like` | Bearer | 200 | 401, 404, 409 |
+| GET | `/posts/{id}/comments` | — | 200 | 404 |
+| POST | `/posts/{id}/comments` | Bearer | 201 (+ correo al dueño) | 401, 404, 422 |
+| GET | `/api/v2/posts`, `/api/v2/posts/{id}` | — | 200 (formato v2) | 404 |
+| GET | `/docs` | — | 200 | — |
+
+### Paginación y búsqueda (Retos 2 y 4)
+
+`GET /api/v1/posts` devuelve bloques de 10 con la información de paginación:
+
+```json
+{
+  "current_page": 1,
+  "data": [ { "id": 15, "title": "...", "user": {"id": 1, "name": "Ana"}, "images": [], "comments": [] } ],
+  "first_page_url": "http://127.0.0.1:8000/api/v1/posts?page=1",
+  "last_page": 2,
+  "next_page_url": "http://127.0.0.1:8000/api/v1/posts?page=2",
+  "per_page": 10,
+  "prev_page_url": null,
+  "total": 15
+}
+```
+
+- `?page=2` trae el siguiente bloque. Una página fuera de rango devuelve 200 con `data` vacío.
+- `?search=viaje` filtra en SQL por título **o** contenido (`LIKE %viaje%`). El `OR` va agrupado para no mezclarse con otros filtros.
+- Se puede combinar: `?search=viaje&page=2`. Los enlaces de página conservan `search` (`withQueryString()`).
+
+### Likes por usuario (Reto 3)
+
+- Cada like se guarda en la tabla pivote `post_user` (relación muchos a muchos `Post::likers()` ↔ `User::likedPosts()`).
+- Primer like → **200** `{"message":"Me gusta añadido correctamente","likes_count":1}`.
+- El mismo usuario otra vez → **409 Conflict** `{"message":"Ya diste like a esta publicación","likes_count":1}`.
+- `likes_count` se recalcula con el conteo real de `post_user`. Si dos peticiones del mismo usuario llegan a la vez, el índice único rechaza la segunda y la API responde 409, no 500.
+
+### Correo al comentar (Reto 5)
+
+- Al comentar un post ajeno se envía el Mailable `NewCommentMail` (asunto **"Nuevo comentario"**) al dueño del post, con el título, quién comentó y el texto.
+- No se envía si el dueño comenta su propio post ni en los posts sin dueño de la Parte 1.
+- Si el servidor de correo falla, el comentario igual se guarda y responde 201 (el error queda en el log).
+- **Desarrollo:** `MAIL_MAILER=log`, el correo queda en `storage/logs/laravel.log`.
+- **Mailtrap Sandbox:** en tu `.env` pon `MAIL_MAILER=smtp`, `MAIL_HOST=sandbox.smtp.mailtrap.io`, `MAIL_PORT=2525` y el usuario/clave de tu bandeja. Las credenciales nunca van al repositorio.
+- **Tests:** `Mail::fake()`.
+
+### Versionado (Reto 6)
+
+| Versión | Prefijo | Controladores | Formato |
+|---|---|---|---|
+| v1 | `/api/v1/...` | `App\Http\Controllers\Api\V1\*` | El de la Parte 1 + auth + paginación |
+| alias | `/api/...` | los mismos de v1 | idéntico a v1 |
+| v2 | `/api/v2/posts` | `App\Http\Controllers\Api\V2\PostController` | API Resources |
+
+Ejemplo de v2 (`GET /api/v2/posts/1`):
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "Mi viaje",
+    "content": "Fotos",
+    "author": {"id": 1, "name": "Ana"},
+    "images": [{"id": 1, "url": "http://127.0.0.1:8000/storage/posts/abc.jpg"}],
+    "likes_count": 2,
+    "comments_count": 3,
+    "created_at": "2026-10-09T05:00:00.000000Z",
+    "updated_at": "2026-10-09T05:00:00.000000Z"
+  }
+}
+```
+
+v2 cambia el formato (autor como objeto, imágenes `{id, url}`, `comments_count` en lugar de la lista de comentarios). Por eso es una versión nueva: v1 sigue igual para quien ya la usa.
+
+> **Ojo con el alias:** `/api/...` mantiene las URLs de la Parte 1, pero no su comportamiento. El listado ahora viene paginado y crear, comentar, borrar y dar like piden token, así que un cliente escrito para la Parte 1 tendría que ajustarse. Desde aquí, los cambios incompatibles van en una versión nueva (como v2) sin tocar v1.
+
+### Documentación (Reto 7 · Scribe)
+
+- La documentación está en **http://127.0.0.1:8000/docs** (con `php artisan serve` corriendo).
+- Desde `/docs` también se descargan la colección de Postman (`/docs.postman`) y la especificación OpenAPI (`/docs.openapi`).
+- Se documentan `api/v1/*` y `api/v2/*`. El alias sin versión es idéntico a v1 y se omite para no duplicar.
+- La documentación sale de los docblocks de los controladores (`@group`, `@authenticated`, `@bodyParam`, `@queryParam`, `@response`).
+- Si cambias un endpoint, regenera con `php artisan scribe:generate`.
+
+### Pruebas
+
+```bash
+php artisan test
+```
+
+67 pruebas (299 aserciones), en `tests/Feature/`:
+
+| Archivo | Qué cubre |
+|---|---|
+| `AuthApiTest` | Registro, login, logout y `/user` |
+| `PostApiTest` | Publicaciones, 401/403/404 y borrado físico |
+| `CommentApiTest` | Comentarios |
+| `LikeApiTest` | Likes: 409, carrera y conteo real |
+| `PaginationApiTest` | Paginación |
+| `SearchApiTest` | Búsqueda |
+| `CommentMailTest` | Correo con `Mail::fake()` |
+| `VersioningApiTest` | v1, alias y v2 |
+| `DocsTest` | `/docs` |
+
+### Postman (Parte 2)
+
+Colección `facebook-api-parte2-postman-collection.json`.
+
+| Variable de colección | Para qué |
+|---|---|
+| `base_url` | URL del servidor |
+| `token` | Token del usuario A, dueño de los posts |
+| `token_b` | Token del usuario B |
+| `post_id` | Post sobre el que se prueba |
+
+- Los requests "Login A" y "Login B" guardan el token solos (pestaña Scripts).
+- La colección se exporta con `token` y `token_b` vacíos.
+
+## Preguntas guía
+
+> Borrador para revisión de Cami. Ajustar con mis palabras antes de entregar.
+
+**1. ¿Cómo se puede diferenciar entre un usuario autenticado y un usuario anónimo en una API REST?**
+Como la API es *stateless*, no hay sesión: cada petición tiene que demostrar quién es. El usuario hace login y recibe un token. A partir de ahí lo envía en el header `Authorization: Bearer <token>`. El middleware `auth:sanctum` busca ese token en `personal_access_tokens`: si existe, `$request->user()` es ese usuario; si no viene o no es válido, la petición se trata como anónima y las rutas protegidas responden 401.
+
+**2. ¿Qué ventaja tiene devolver resultados paginados en lugar de todos los registros a la vez?**
+La respuesta tiene un tamaño acotado sin importar cuántos posts haya. La consulta a la base de datos es más liviana (`LIMIT`/`OFFSET`), se transfieren menos datos y el cliente (web o móvil) muestra algo rápido y carga más cuando lo necesita (scroll infinito, botón "siguiente"). Además la respuesta trae `total`, `last_page` y los enlaces, así el cliente sabe cómo navegar.
+
+**3. ¿Qué problema tiene un contador global si varios usuarios interactúan a la vez?**
+Con solo un número no se sabe quién dio like. Por eso el mismo usuario podía sumar likes infinitos y no había forma de evitarlo ni de quitarlo. Si dos peticiones leen y escriben el contador al mismo tiempo, una puede pisar a la otra y el número queda mal. Con la tabla `post_user` cada like es una fila con dueño, el índice único impide los repetidos y el total sale de contar filas reales.
+
+**4. ¿Cómo afecta la búsqueda al flujo de la API y qué diferencias hay entre filtrar en SQL y hacerlo en el backend manualmente?**
+El mismo endpoint `GET /posts` acepta un parámetro opcional (`?search=`) que cambia qué registros devuelve, sin crear rutas nuevas. Filtrar en SQL (`WHERE title LIKE ...`) hace que la base de datos devuelva solo lo que coincide, y se combina bien con la paginación. Filtrar en PHP obligaría a traer todos los posts a memoria y descartarlos uno por uno: es más lento, gasta más memoria y rompe la paginación, porque se contaría sobre datos ya recortados.
+
+**5. ¿Qué ventajas tiene automatizar notificaciones por correo en una red social o plataforma de contenido?**
+El dueño se entera de la actividad sin tener que entrar a revisar, lo que aumenta la participación y el regreso a la plataforma. El envío es consistente, porque siempre ocurre al guardar un comentario y no depende de que alguien se acuerde. Queda centralizado en un Mailable reutilizable, se puede probar con `Mail::fake()` y más adelante se puede pasar a una cola para no demorar la respuesta de la API.
+
+**6. ¿Por qué es importante versionar una API cuando se agregan cambios significativos?**
+Hay clientes (apps móviles, frontends, otros servicios) que ya dependen del formato actual y no se actualizan todos al mismo tiempo. Si se cambia el formato en la misma URL, esos clientes se rompen. Con versiones, los cambios incompatibles van en `/v2` mientras `/v1` sigue funcionando igual. Así cada cliente migra cuando pueda y la versión vieja se retira de forma planificada.
+
+**7. ¿Por qué es más fácil mantener una API cuando la documentación está presente?**
+Otros desarrolladores (y uno mismo después de un tiempo) pueden usar la API sin leer el código: ven cada ruta, el método, el body, si pide token y qué respuestas y códigos devuelve. Con Scribe la documentación se genera desde el código, así que es más fácil mantenerla al día. Además trae ejemplos y una colección de Postman lista, y reduce las preguntas y los errores de integración.
+
 ## Evidencia de proceso (commits)
 
 El historial sigue **Conventional Commits** en español, un commit por cada bloque del taller:
@@ -319,3 +526,22 @@ El historial sigue **Conventional Commits** en español, un commit por cada bloq
 | 8 | `docs: agregar README del proyecto` |
 
 En las pruebas con Postman no aparecieron errores de código, por eso no hay commits `fix:`.
+
+### Parte 2
+
+| # | Commit |
+|---|---|
+| — | tag `parte-1` |
+| 0 | `docs: agregar guía de la parte 2 del taller` |
+| 1 | `feat: agregar registro e inicio de sesión con Sanctum` |
+| 2 | `feat: proteger endpoints y asociar publicaciones y comentarios al usuario` |
+| 3 | `feat: likes únicos por usuario con tabla pivote` |
+| 4 | `feat: paginar el listado de publicaciones` |
+| 5 | `feat: buscar publicaciones por título o contenido` |
+| 6 | `feat: notificar por correo al dueño del post al comentar` |
+| 7 | `feat: versionar la API en v1 y agregar v2` |
+| 7b | `fix: no fallar el comentario si el correo no se puede enviar` |
+| 8 | `docs: documentar la API con Scribe` |
+| 9 | `test: completar pruebas de la parte 2` |
+| 10 | `docs: actualizar README con la parte 2` |
+| 11 | `test: exportar colección de Postman de la parte 2` |
