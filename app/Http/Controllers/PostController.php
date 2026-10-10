@@ -11,12 +11,16 @@ use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // ?search= filtra en SQL por título o contenido; el OR va agrupado en su propio where
         // Paginado de a 10: data + current_page, last_page, per_page, total, links...
         $posts = Post::with(['user:id,name', 'images', 'comments'])
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($w) =>
+                $w->where('title', 'like', "%{$s}%")->orWhere('content', 'like', "%{$s}%")))
             ->latest()
             ->paginate(10)
+            ->withQueryString()
             ->through(fn ($post) => $this->addImageUrls($post));
 
         return response()->json($posts, 200);
