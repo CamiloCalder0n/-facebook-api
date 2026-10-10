@@ -214,4 +214,11 @@ class PostApiTest extends TestCase
 
         $this->postJson("/api/posts/{$post->id}/like")->assertStatus(401);
     }
+
+    public function test_borrar_post_inexistente_devuelve_404(): void
+    {
+        $this->actingAsOwner();
+
+        $this->deleteJson('/api/posts/999')->assertStatus(404);
+    }
 }

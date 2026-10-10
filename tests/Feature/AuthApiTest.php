@@ -84,4 +84,44 @@ class AuthApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/user')->assertStatus(401);
     }
+
+    public function test_logout_revoca_solo_el_token_actual(): void
+    {
+        $user = User::factory()->create();
+        $tokenWeb = $user->createToken('web')->plainTextToken;
+        $tokenMovil = $user->createToken('movil')->plainTextToken;
+
+        $this->withToken($tokenWeb)->postJson('/api/logout')->assertStatus(200);
+        $this->app['auth']->forgetGuards();
+
+        $this->withToken($tokenWeb)->getJson('/api/user')->assertStatus(401);
+        $this->app['auth']->forgetGuards();
+        $this->withToken($tokenMovil)->getJson('/api/user')->assertStatus(200);
+        $this->assertSame(1, $user->tokens()->count());
+    }
+
+    public function test_login_sin_datos_devuelve_422(): void
+    {
+        $this->postJson('/api/login', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['email', 'password']);
+    }
+
+    public function test_logout_sin_token_devuelve_401(): void
+    {
+        $this->postJson('/api/logout')->assertStatus(401);
+    }
+
+    public function test_registro_con_datos_invalidos_devuelve_422(): void
+    {
+        $this->postJson('/api/register', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['name', 'email', 'password']);
+
+        $this->registrar(['email' => 'no-es-correo', 'password' => 'corta', 'password_confirmation' => 'otra'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['email', 'password']);
+
+        $this->assertDatabaseCount('users', 0);
+    }
 }

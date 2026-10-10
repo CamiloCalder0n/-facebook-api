@@ -87,4 +87,9 @@ class CommentApiTest extends TestCase
             ->assertJsonCount(2)
             ->assertJsonStructure([['id', 'post_id', 'author', 'content']]);
     }
+
+    public function test_listar_comentarios_de_post_inexistente_devuelve_404(): void
+    {
+        $this->getJson('/api/posts/999/comments')->assertStatus(404);
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -85,5 +86,48 @@ class LikeApiTest extends TestCase
 
         $this->deleteJson("/api/posts/{$post->id}")->assertStatus(204);
         $this->assertDatabaseCount('post_user', 0);
+    }
+
+    public function test_carrera_de_likes_devuelve_409_y_no_500(): void
+    {
+        $post = Post::create(['title' => 'T', 'content' => 'C']);
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        // Simula la otra petición simultánea: inserta el like justo después
+        // de la verificación exists() y antes del attach()
+        DB::listen(function ($query) use ($post, $user) {
+            static $hecho = false;
+            if (! $hecho && str_contains($query->sql, 'exists') && str_contains($query->sql, 'post_user')) {
+                $hecho = true;
+                DB::table('post_user')->insert([
+                    'post_id' => $post->id, 'user_id' => $user->id,
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        });
+
+        $this->postJson("/api/posts/{$post->id}/like")
+            ->assertStatus(409)
+            ->assertJsonPath('likes_count', 1);
+
+        $this->assertDatabaseCount('post_user', 1);
+    }
+
+    public function test_likes_count_coincide_con_post_user_en_todas_las_lecturas(): void
+    {
+        $post = Post::create(['title' => 'T', 'content' => 'C']);
+
+        foreach (User::factory()->count(3)->create() as $user) {
+            Sanctum::actingAs($user);
+            $this->postJson("/api/posts/{$post->id}/like")->assertOk();
+        }
+
+        $this->assertDatabaseCount('post_user', 3);
+        $this->assertSame(3, $post->likers()->count());
+
+        $this->getJson("/api/posts/{$post->id}")->assertJsonPath('likes_count', 3);
+        $this->getJson('/api/posts')->assertJsonPath('data.0.likes_count', 3);
+        $this->getJson("/api/v2/posts/{$post->id}")->assertJsonPath('data.likes_count', 3);
     }
 }

@@ -99,4 +99,24 @@ class VersioningApiTest extends TestCase
 
         $this->getJson("/api/v2/posts/{$viejo->id}")->assertJsonPath('data.author', null);
     }
+
+    public function test_v2_muestra_el_likes_count_real(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+        $this->postJson("/api/v1/posts/{$this->post->id}/like")->assertOk();
+
+        $this->getJson('/api/v2/posts')->assertJsonPath('data.0.likes_count', 1);
+    }
+
+    public function test_comentarios_y_borrado_funcionan_con_prefijo_v1(): void
+    {
+        $this->getJson("/api/v1/posts/{$this->post->id}/comments")->assertOk()->assertJsonCount(2);
+
+        Sanctum::actingAs($this->post->user);
+        $this->postJson("/api/v1/posts/{$this->post->id}/comments", ['content' => 'Desde v1'])
+            ->assertStatus(201);
+        $this->deleteJson("/api/v1/posts/{$this->post->id}")->assertStatus(204);
+
+        $this->assertDatabaseMissing('posts', ['id' => $this->post->id]);
+    }
 }
