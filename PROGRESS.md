@@ -42,7 +42,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - [x] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
 - [x] Paso 5 — Reto 4 · Búsqueda · `feat: buscar publicaciones por título o contenido`
 - [x] Paso 6 — Reto 5 · Correo al comentar · `feat: notificar por correo al dueño del post al comentar`
-- [ ] Paso 7 — Reto 6 · Versionado · `feat: versionar la API en v1 y agregar v2`
+- [x] Paso 7 — Reto 6 · Versionado · `feat: versionar la API en v1 y agregar v2`
 - [ ] Paso 8 — Reto 7 · Documentación con Scribe · `docs: documentar la API con Scribe`
 - [ ] Paso 9 — Revisión de pruebas · `test: completar pruebas de la parte 2` (si aplica)
 - [ ] Paso 10 — Pruebas en Postman (guiadas, las hace Cami) · `test: exportar colección de Postman de la parte 2`
@@ -58,3 +58,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - Paso 4: index con paginate(10)->through(addImageUrls). Cambia el formato de GET /api/posts (arreglo → objeto con data); test de la Parte 1 actualizado: test_listar_posts (ahora lee data). PaginationApiTest (4). 39/39.
 - Paso 5: ?search= con where agrupado (title OR content) + paginate(10)->withQueryString(). SearchApiTest (4). 43/43.
 - Paso 6: NewCommentMail (markdown mail.new-comment, asunto "Nuevo comentario": título del post, quién comentó y el texto). Se envía al dueño solo si existe y no es quien comenta. Verificado con MAIL_MAILER=log (laravel.log). CommentMailTest (4). 47/47. Pendiente: evidencia en Mailtrap (credenciales solo en el .env de Cami, en el Paso 10).
+- Paso 7: controladores movidos con git mv a Api/V1; rutas en closure $v1 montada en /api/v1 y en /api (alias); v2 = Api/V2/PostController con PostResource/ImageResource/UserResource (author {id,name}, images {id,url}, comments_count, paginado con links/meta). 24 rutas: 11 v1 + 11 alias + 2 v2. VersioningApiTest (7). 54/54.
