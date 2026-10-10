@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\PostImage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
     public function index()
     {
-        $posts = Post::with(['images', 'comments'])
+        $posts = Post::with(['user:id,name', 'images', 'comments'])
             ->latest()
             ->get()
             ->map(fn ($post) => $this->addImageUrls($post));
@@ -21,7 +22,7 @@ class PostController extends Controller
 
     public function show($id)
     {
-        $post = Post::with(['images', 'comments'])->findOrFail($id);
+        $post = Post::with(['user:id,name', 'images', 'comments'])->findOrFail($id);
 
         return response()->json($this->addImageUrls($post), 200);
     }
@@ -36,6 +37,7 @@ class PostController extends Controller
         ]);
 
         $post = Post::create([
+            'user_id' => $request->user()->id,
             'title'   => $request->title,
             'content' => $request->content,
         ]);
@@ -50,7 +52,7 @@ class PostController extends Controller
             }
         }
 
-        return response()->json($this->addImageUrls($post->load('images')), 201);
+        return response()->json($this->addImageUrls($post->load(['user:id,name', 'images'])), 201);
     }
 
     public function like($id)
@@ -67,6 +69,9 @@ class PostController extends Controller
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
+
+        // 403 si no es el dueño (PostPolicy)
+        Gate::authorize('delete', $post);
 
         foreach ($post->images as $image) {
             Storage::disk('public')->delete($image->image_path);

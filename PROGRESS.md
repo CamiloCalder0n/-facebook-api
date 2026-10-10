@@ -37,7 +37,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 
 - [x] Paso 0 — Preflight y puesta al día · `docs: agregar guía de la parte 2 del taller`
 - [x] Paso 1 — Reto 1a · Registro, login y tokens con Sanctum · `feat: agregar registro e inicio de sesión con Sanctum`
-- [ ] Paso 2 — Reto 1b · Proteger endpoints y asociar el usuario · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario`
+- [x] Paso 2 — Reto 1b · Proteger endpoints y asociar el usuario · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario`
 - [ ] Paso 3 — Reto 3 · Likes únicos por usuario · `feat: likes únicos por usuario con tabla pivote`
 - [ ] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
 - [ ] Paso 5 — Reto 4 · Búsqueda · `feat: buscar publicaciones por título o contenido`
@@ -53,3 +53,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 
 - Paso 0: entorno OK (PHP 8.4.1, Sanctum v4.3.3 ya instalado, `personal_access_tokens` migrada, 15/15). Decisiones D1–D13 con defaults; orden de la guía; D9 fuera; alias (a); posts sin dueño no se borran.
 - Paso 1: HasApiTokens en User; AuthController (register 201, login 200/401, logout revoca el token actual, me); rutas /register, /login públicas y /logout, /user con auth:sanctum; AuthApiTest (6). 21/21. No se corrió la Recomendación del Reto 1 (Sanctum ya instalado; vendor:publish duplicaría la migración).
+- Paso 2: migraciones nuevas add_user_id_to_posts/comments (nullable, nullOnDelete; las de la Parte 1 no se editan porque ya están aplicadas y versionadas). Relaciones user/posts/comments; store/like/comments/destroy con auth:sanctum; PostPolicy (403 a post ajeno y a posts sin dueño); lecturas con user:id,name. Tests cambiados: 7 de PostApiTest y 4 de CommentApiTest (necesitan token; "comentar sin author 422" pasa a "sin content 422"). Nuevos: 6 + 2. 29/29.

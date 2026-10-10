@@ -5,19 +5,29 @@ namespace Tests\Feature;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\PostImage;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PostApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
         Storage::fake('public');
+        $this->user = User::factory()->create();
+    }
+
+    private function actingAsOwner(): void
+    {
+        Sanctum::actingAs($this->user);
     }
 
     private function createPostWithImages(int $count = 2): array
@@ -26,6 +36,8 @@ class PostApiTest extends TestCase
         for ($i = 0; $i < $count; $i++) {
             $images[] = UploadedFile::fake()->image("img{$i}.jpg");
         }
+
+        $this->actingAsOwner();
 
         $response = $this->post('/api/posts', [
             'title' => 'Mi post',
@@ -56,6 +68,8 @@ class PostApiTest extends TestCase
 
     public function test_crear_post_sin_titulo_devuelve_422(): void
     {
+        $this->actingAsOwner();
+
         $this->postJson('/api/posts', ['content' => 'Contenido'])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['title']);
@@ -65,6 +79,8 @@ class PostApiTest extends TestCase
 
     public function test_crear_post_con_pdf_devuelve_422(): void
     {
+        $this->actingAsOwner();
+
         $this->post('/api/posts', [
             'title' => 'Post',
             'content' => 'Contenido',
@@ -111,6 +127,7 @@ class PostApiTest extends TestCase
     {
         $post = Post::create(['title' => 'T', 'content' => 'C']);
         $this->assertEquals(0, $post->fresh()->likes_count);
+        $this->actingAsOwner();
 
         $this->postJson("/api/posts/{$post->id}/like")
             ->assertStatus(200)
@@ -145,5 +162,56 @@ class PostApiTest extends TestCase
         $post = Post::create(['title' => 'T', 'content' => 'C']);
 
         $this->getJson("/api/posts/{$post->id}/like")->assertStatus(405);
+    }
+
+    public function test_post_creado_guarda_user_id_y_devuelve_el_autor(): void
+    {
+        [$response, $post] = $this->createPostWithImages(1);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('user_id', $this->user->id)
+            ->assertJsonPath('user.name', $this->user->name)
+            ->assertJsonMissingPath('user.email');
+        $this->assertSame($this->user->id, $post->user_id);
+    }
+
+    public function test_crear_post_sin_token_devuelve_401(): void
+    {
+        $this->postJson('/api/posts', ['title' => 'T', 'content' => 'C'])
+            ->assertStatus(401);
+
+        $this->assertDatabaseCount('posts', 0);
+    }
+
+    public function test_borrar_post_sin_token_devuelve_401(): void
+    {
+        $post = Post::create(['user_id' => $this->user->id, 'title' => 'T', 'content' => 'C']);
+
+        $this->deleteJson("/api/posts/{$post->id}")->assertStatus(401);
+        $this->assertDatabaseHas('posts', ['id' => $post->id]);
+    }
+
+    public function test_borrar_post_ajeno_devuelve_403(): void
+    {
+        $post = Post::create(['user_id' => $this->user->id, 'title' => 'T', 'content' => 'C']);
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->deleteJson("/api/posts/{$post->id}")->assertStatus(403);
+        $this->assertDatabaseHas('posts', ['id' => $post->id]);
+    }
+
+    public function test_post_sin_duenio_de_la_parte_1_no_se_puede_borrar(): void
+    {
+        $post = Post::create(['title' => 'Viejo', 'content' => 'Sin dueño']);
+        $this->actingAsOwner();
+
+        $this->deleteJson("/api/posts/{$post->id}")->assertStatus(403);
+    }
+
+    public function test_like_sin_token_devuelve_401(): void
+    {
+        $post = Post::create(['title' => 'T', 'content' => 'C']);
+
+        $this->postJson("/api/posts/{$post->id}/like")->assertStatus(401);
     }
 }
