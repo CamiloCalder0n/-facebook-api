@@ -30,3 +30,25 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 - Paso 9: sin cambios de código (no aplica commit fix). 7 rutas sin verbos ("like" es sustantivo: el recurso "me gusta"); ningún error responde 200; tests 15/15. Nota para README: en Laravel 10/11, sin `Accept: application/json` un error de validación redirige (302); Laravel 13 trae `shouldRenderJsonWhen` para `api/*` en bootstrap/app.php y responde 422 JSON igual (verificado en Postman con "422 - Sin header Accept"). Se mantiene; el header Accept se envía siempre por buena práctica.
 - Paso 10: README.md (autor Juan Camilo Calderon, individual). Comandos de instalación verificados en frío en un clon temporal: migrate OK, GET /api/posts 200, POST sin title 422.
 - Paso 11: checklist final 12/12 con evidencia real (curl contra el serve de Cami, DELETE borró archivos y filas del post de prueba). Falta solo crear el repo en GitHub y hacer push (lo hace Cami).
+
+## Parte 2 · Retos avanzados
+
+Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
+
+- [x] Paso 0 — Preflight y puesta al día · `docs: agregar guía de la parte 2 del taller`
+- [ ] Paso 1 — Reto 1a · Registro, login y tokens con Sanctum · `feat: agregar registro e inicio de sesión con Sanctum`
+- [ ] Paso 2 — Reto 1b · Proteger endpoints y asociar el usuario · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario`
+- [ ] Paso 3 — Reto 3 · Likes únicos por usuario · `feat: likes únicos por usuario con tabla pivote`
+- [ ] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
+- [ ] Paso 5 — Reto 4 · Búsqueda · `feat: buscar publicaciones por título o contenido`
+- [ ] Paso 6 — Reto 5 · Correo al comentar · `feat: notificar por correo al dueño del post al comentar`
+- [ ] Paso 7 — Reto 6 · Versionado · `feat: versionar la API en v1 y agregar v2`
+- [ ] Paso 8 — Reto 7 · Documentación con Scribe · `docs: documentar la API con Scribe`
+- [ ] Paso 9 — Revisión de pruebas · `test: completar pruebas de la parte 2` (si aplica)
+- [ ] Paso 10 — Pruebas en Postman (guiadas, las hace Cami) · `test: exportar colección de Postman de la parte 2`
+- [ ] Paso 11 — README y preguntas guía · `docs: actualizar README con la parte 2`
+- [ ] Paso 12 — Checklist final y evidencias
+
+### Notas Parte 2
+
+- Paso 0: entorno OK (PHP 8.4.1, Sanctum v4.3.3 ya instalado, `personal_access_tokens` migrada, 15/15). Decisiones D1–D13 con defaults; orden de la guía; D9 fuera; alias (a); posts sin dueño no se borran.

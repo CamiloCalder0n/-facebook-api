@@ -11,7 +11,7 @@ Estado actual del trabajo: ver `PROGRESS.md`.
 - BD: SQLite (`database/database.sqlite`).
 - Tests: PHPUnit (default de Laravel).
 - Repo git ya inicializado en rama `main`.
-- No se usa Sanctum ni autenticación.
+- Parte 1 sin autenticación; Parte 2 con Sanctum (tokens Bearer).
 - Servidor: `php artisan serve` con PHP 8.4 en http://127.0.0.1:8000. No usar Apache de XAMPP (su PHP 8.2.4 no cumple el mínimo de Laravel 13).
 
 ## REGLAS DE TRABAJO (obligatorias)
@@ -67,3 +67,61 @@ Conventional Commits en español. Los hace Cami, no Claude. Orden esperado:
 | 8b | `test: exportar colección de Postman` |
 | 9 | `fix: corregir errores de validación y almacenamiento` *(solo si hubo cambios)* |
 | 10 | `docs: agregar README del proyecto` |
+
+## Parte 2 · Retos avanzados
+
+Guía: `docs/PASOS_CLAUDE_CODE_PARTE2.md`. Fuente: `docs/Taller_Parte_2_API_REST.md`. Ignorar `AGENTS.md` (Laravel Boost no es parte del taller).
+La Parte 1 queda congelada en el tag `parte-1` (sobre `b2bf945`). Las migraciones de la Parte 1 no se editan: todo cambio de esquema va en migraciones nuevas. La suite (`php artisan test`) debe quedar en verde al cerrar cada paso.
+
+### Decisiones confirmadas
+
+| # | Decisión |
+|---|---|
+| D1 | Los 7 retos |
+| D2 | Trabajo en `main` después del tag `parte-1` |
+| D3 | Orden de la guía: Auth (Reto 1) → Likes (Reto 3) → Paginación (Reto 2) → Búsqueda (Reto 4) → Correo (Reto 5) → Versionado (Reto 6) → Docs (Reto 7) |
+| D4 | Login con credenciales malas → 401 `{"message":"Credenciales inválidas"}` |
+| D5 | Borrar post ajeno → 403 con `PostPolicy`. Los posts sin dueño (Parte 1, `user_id` null) tampoco se pueden borrar (403) |
+| D6 | Comentarios guardan `user_id`; `author` = `user->name` (ya no es obligatorio en el body) |
+| D7 | Like repetido → 409 Conflict |
+| D8 | Fuente de verdad de likes: tabla `post_user`; `likes_count` se recalcula con el conteo real |
+| D9 | Sin `DELETE /posts/{id}/like` (no lo pide el taller) |
+| D10 | Correo: `log` en desarrollo, `Mail::fake()` en tests, Mailtrap Sandbox para la evidencia (credenciales solo en `.env`) |
+| D11 | `/api/v1/*` = API actual; `/api/*` alias de v1 (mismas URLs; el comportamiento sí cambia respecto a la Parte 1: paginación y token, y se documenta así en el README); `/api/v2/posts` con API Resources |
+| D12 | Documentación con Scribe (plan B: l5-swagger) |
+| D13 | Colección Postman nueva "Facebook API - Taller Backend · Parte 2" → `facebook-api-parte2-postman-collection.json`; la de la Parte 1 no se toca |
+
+No se corre la "Recomendación" del Reto 1 (`composer require laravel/sanctum` + `vendor:publish`): Sanctum ya vino con `install:api` y publicarlo duplicaría la migración de `personal_access_tokens`.
+
+### Modelo de datos objetivo
+
+```
+users (id, name, email, password, ...)
+posts (id, user_id FK nullable, title, content, likes_count, timestamps)
+  ├─1:N─ post_images (id, post_id FK cascade, image_path, timestamps)
+  ├─1:N─ comments    (id, post_id FK cascade, user_id FK nullable, author, content, timestamps)
+  └─N:M─ users vía post_user (id, post_id FK cascade, user_id FK cascade, timestamps, UNIQUE(post_id,user_id))
+```
+
+### Endpoints objetivo (`/api/v1/...` y alias `/api/...`)
+
+| Método | Ruta | Auth | Éxito | Errores |
+|---|---|---|---|---|
+| POST | /register | — | 201 + token | 422 |
+| POST | /login | — | 200 + token | 401, 422 |
+| POST | /logout | Bearer | 200 | 401 |
+| GET | /user | Bearer | 200 | 401 |
+| GET | /posts?page=&search= | — | 200 paginado | — |
+| GET | /posts/{id} | — | 200 | 404 |
+| POST | /posts | Bearer | 201 | 401, 422 |
+| DELETE | /posts/{id} | Bearer (solo dueño) | 204 | 401, 403, 404 |
+| POST | /posts/{id}/like | Bearer | 200 | 401, 404, 409 |
+| GET | /posts/{id}/comments | — | 200 | 404 |
+| POST | /posts/{id}/comments | Bearer | 201 (+ correo al dueño) | 401, 404, 422 |
+| GET | /api/v2/posts, /api/v2/posts/{id} | — | 200 (formato nuevo) | 404 |
+| GET | /docs | — | 200 | — |
+
+### Commits Parte 2
+
+`docs: agregar guía de la parte 2 del taller` · `feat: agregar registro e inicio de sesión con Sanctum` · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario` · `feat: likes únicos por usuario con tabla pivote` · `feat: paginar el listado de publicaciones` · `feat: buscar publicaciones por título o contenido` · `feat: notificar por correo al dueño del post al comentar` · `feat: versionar la API en v1 y agregar v2` · `docs: documentar la API con Scribe` · `test: completar pruebas de la parte 2` (si aplica) · `test: exportar colección de Postman de la parte 2` · `docs: actualizar README con la parte 2`.
+Cami hace los commits. Claude deja una "foto" del árbol al final de cada paso (`git add -A && git write-tree`) para que Cami los cree en orden con el script de commits.
