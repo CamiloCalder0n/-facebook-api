@@ -47,7 +47,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - [x] Paso 9 — Revisión de pruebas · `test: completar pruebas de la parte 2` (si aplica)
 - [ ] Paso 10 — Pruebas en Postman (guiadas, las hace Cami) · `test: exportar colección de Postman de la parte 2`
 - [x] Paso 11 — README y preguntas guía · `docs: actualizar README con la parte 2`
-- [ ] Paso 12 — Checklist final y evidencias
+- [x] Paso 12 — Checklist final y evidencias
 
 ### Notas Parte 2
 
@@ -63,3 +63,5 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - Paso 8: Scribe 5.11 (--dry-run resolvió con Laravel 13). config: solo api/v1/* y api/v2/* (el alias se omite para no duplicar), auth Bearer, tipo laravel (/docs), response calls solo GET (Scribe no las usó: hay @response en todo). Docblocks por subagente Opus (4 controladores, solo comentarios). Generado: .scribe/, resources/views/scribe, public/vendor/scribe, storage/app/private/scribe/{collection.json,openapi.yaml} (se versionan para que /docs, /docs.postman y /docs.openapi funcionen al clonar; Scribe dice que commitear .scribe es opcional y preserva ediciones). DocsTest (2). 57/57.
 - Paso 9: subagente Opus (solo lectura) comparó tests vs endpoints y D4–D11: faltaban 8 casos. Agregados: logout revoca solo el token actual, logout sin token 401, login sin datos 422, registro inválido 422, carrera de like → 409 (verificado por mutación: sin el catch da 500), DELETE inexistente 404, comentarios de post inexistente 404, likes_count = post_user en v1/v2, rutas v1 de comentarios y borrado. 67/67, 299 aserciones.
 - Paso 11 (adelantado antes del Paso 10, que depende de Cami en Postman): README con sección "Parte 2 · Retos avanzados" (modelo, auth con curl, tabla de endpoints, paginación/búsqueda, likes 409, correo log/Mailtrap sin credenciales, versionado y aviso honesto sobre el alias, Scribe /docs, tests, Postman) y "Preguntas guía" (borrador para revisión de Cami). .env.example con comentario de MAIL_* sin valores reales.
+- Paso 12: 4 checkers Opus de solo lectura (máx. 2 a la vez) sobre el árbol ef6e25d. auth-checker 6/6 PASS, data-checker 6/6 PASS, contract-checker 6/6 PASS (11 v1 + 11 alias + 2 v2), docs-checker 5/6 PASS + 1 FAIL leve (README decía "67 pruebas en tests/Feature"; son 66 + 1 Unit) → corregido. Comentario de cascada en destroy ahora menciona post_user. docs/EVIDENCIAS_PARTE2.md con las 32 capturas sugeridas. 67/67.
+- Pendiente de Cami: tag parte-1, correr el script de commits, Paso 10 (Postman + Mailtrap) y su commit `test: exportar colección de Postman de la parte 2`, y el push.

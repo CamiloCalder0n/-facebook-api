@@ -457,7 +457,7 @@ v2 cambia el formato (autor como objeto, imágenes `{id, url}`, `comments_count`
 php artisan test
 ```
 
-67 pruebas (299 aserciones), en `tests/Feature/`:
+67 pruebas (299 aserciones): 66 en `tests/Feature/` y 1 en `tests/Unit/` (el ejemplo de Laravel).
 
 | Archivo | Qué cubre |
 |---|---|
@@ -470,6 +470,7 @@ php artisan test
 | `CommentMailTest` | Correo con `Mail::fake()` |
 | `VersioningApiTest` | v1, alias y v2 |
 | `DocsTest` | `/docs` |
+| `ExampleTest` (Feature y Unit) | Ejemplos que trae Laravel |
 
 ### Postman (Parte 2)
 
@@ -544,4 +545,5 @@ En las pruebas con Postman no aparecieron errores de código, por eso no hay com
 | 8 | `docs: documentar la API con Scribe` |
 | 9 | `test: completar pruebas de la parte 2` |
 | 10 | `docs: actualizar README con la parte 2` |
-| 11 | `test: exportar colección de Postman de la parte 2` |
+| 11 | `fix: corregir conteo de pruebas en README y agregar lista de evidencias` |
+| 12 | `test: exportar colección de Postman de la parte 2` |

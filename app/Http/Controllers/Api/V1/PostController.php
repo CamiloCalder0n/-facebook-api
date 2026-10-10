@@ -178,7 +178,7 @@ class PostController extends Controller
             Storage::disk('public')->delete($image->image_path);
         }
 
-        // La BD borra post_images y comments por la FK con cascada
+        // La BD borra post_images, comments y post_user por la FK con cascada
         $post->delete();
 
         return response()->json(null, 204);
