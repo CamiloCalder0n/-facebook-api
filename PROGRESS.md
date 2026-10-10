@@ -36,7 +36,7 @@ Detalle de cada paso en `docs/PASOS_CLAUDE_CODE.md`.
 Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 
 - [x] Paso 0 — Preflight y puesta al día · `docs: agregar guía de la parte 2 del taller`
-- [ ] Paso 1 — Reto 1a · Registro, login y tokens con Sanctum · `feat: agregar registro e inicio de sesión con Sanctum`
+- [x] Paso 1 — Reto 1a · Registro, login y tokens con Sanctum · `feat: agregar registro e inicio de sesión con Sanctum`
 - [ ] Paso 2 — Reto 1b · Proteger endpoints y asociar el usuario · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario`
 - [ ] Paso 3 — Reto 3 · Likes únicos por usuario · `feat: likes únicos por usuario con tabla pivote`
 - [ ] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
@@ -52,3 +52,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 ### Notas Parte 2
 
 - Paso 0: entorno OK (PHP 8.4.1, Sanctum v4.3.3 ya instalado, `personal_access_tokens` migrada, 15/15). Decisiones D1–D13 con defaults; orden de la guía; D9 fuera; alias (a); posts sin dueño no se borran.
+- Paso 1: HasApiTokens en User; AuthController (register 201, login 200/401, logout revoca el token actual, me); rutas /register, /login públicas y /logout, /user con auth:sanctum; AuthApiTest (6). 21/21. No se corrió la Recomendación del Reto 1 (Sanctum ya instalado; vendor:publish duplicaría la migración).
