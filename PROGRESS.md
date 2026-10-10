@@ -39,7 +39,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - [x] Paso 1 — Reto 1a · Registro, login y tokens con Sanctum · `feat: agregar registro e inicio de sesión con Sanctum`
 - [x] Paso 2 — Reto 1b · Proteger endpoints y asociar el usuario · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario`
 - [x] Paso 3 — Reto 3 · Likes únicos por usuario · `feat: likes únicos por usuario con tabla pivote`
-- [ ] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
+- [x] Paso 4 — Reto 2 · Paginación · `feat: paginar el listado de publicaciones`
 - [ ] Paso 5 — Reto 4 · Búsqueda · `feat: buscar publicaciones por título o contenido`
 - [ ] Paso 6 — Reto 5 · Correo al comentar · `feat: notificar por correo al dueño del post al comentar`
 - [ ] Paso 7 — Reto 6 · Versionado · `feat: versionar la API en v1 y agregar v2`
@@ -55,3 +55,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - Paso 1: HasApiTokens en User; AuthController (register 201, login 200/401, logout revoca el token actual, me); rutas /register, /login públicas y /logout, /user con auth:sanctum; AuthApiTest (6). 21/21. No se corrió la Recomendación del Reto 1 (Sanctum ya instalado; vendor:publish duplicaría la migración).
 - Paso 2: migraciones nuevas add_user_id_to_posts/comments (nullable, nullOnDelete; las de la Parte 1 no se editan porque ya están aplicadas y versionadas). Relaciones user/posts/comments; store/like/comments/destroy con auth:sanctum; PostPolicy (403 a post ajeno y a posts sin dueño); lecturas con user:id,name. Tests cambiados: 7 de PostApiTest y 4 de CommentApiTest (necesitan token; "comentar sin author 422" pasa a "sin content 422"). Nuevos: 6 + 2. 29/29.
 - Paso 3: post_user con unique(post_id,user_id) y cascada; Post::likers / User::likedPosts; like 200 / 409 (también ante UniqueConstraintViolationException por carrera); likes_count = conteo real del pivote. LikeApiTest (6). 35/35.
+- Paso 4: index con paginate(10)->through(addImageUrls). Cambia el formato de GET /api/posts (arreglo → objeto con data); test de la Parte 1 actualizado: test_listar_posts (ahora lee data). PaginationApiTest (4). 39/39.

@@ -13,10 +13,11 @@ class PostController extends Controller
 {
     public function index()
     {
+        // Paginado de a 10: data + current_page, last_page, per_page, total, links...
         $posts = Post::with(['user:id,name', 'images', 'comments'])
             ->latest()
-            ->get()
-            ->map(fn ($post) => $this->addImageUrls($post));
+            ->paginate(10)
+            ->through(fn ($post) => $this->addImageUrls($post));
 
         return response()->json($posts, 200);
     }

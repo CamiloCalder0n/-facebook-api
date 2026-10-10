@@ -100,12 +100,12 @@ class PostApiTest extends TestCase
 
         $this->getJson('/api/posts')
             ->assertStatus(200)
-            ->assertJsonCount(1)
-            ->assertJsonStructure([[
+            ->assertJsonCount(1, 'data')
+            ->assertJsonStructure(['data' => [[
                 'id', 'title', 'content', 'likes_count',
                 'images' => [['id', 'image_path', 'image_url']],
                 'comments' => [['id', 'author', 'content']],
-            ]]);
+            ]]]);
     }
 
     public function test_ver_post_existente(): void
