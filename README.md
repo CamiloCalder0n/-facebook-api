@@ -10,6 +10,7 @@ API RESTful que simula las interacciones básicas de una red social: **publicaci
 | **Materia** | Arquitectura y Desarrollo Backend |
 | **Institución** | Universidad Autónoma de Bucaramanga (UNAB) |
 | **Docente** | Fabian Enrique Suarez Carvajal |
+| **Informe de evidencias** | [Evidencias_Taller_API_REST_Completo.pdf](docs/Evidencias_Taller_API_REST_Completo.pdf) (Partes 1 y 2) |
 
 ---
 
