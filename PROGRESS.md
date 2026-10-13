@@ -45,7 +45,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - [x] Paso 7 — Reto 6 · Versionado · `feat: versionar la API en v1 y agregar v2`
 - [x] Paso 8 — Reto 7 · Documentación con Scribe · `docs: documentar la API con Scribe`
 - [x] Paso 9 — Revisión de pruebas · `test: completar pruebas de la parte 2` (si aplica)
-- [ ] Paso 10 — Pruebas en Postman (guiadas, las hace Cami) · `test: exportar colección de Postman de la parte 2`
+- [x] Paso 10 — Pruebas en Postman (guiadas, las hace Cami) · `test: exportar colección de Postman de la parte 2`
 - [x] Paso 11 — README y preguntas guía · `docs: actualizar README con la parte 2`
 - [x] Paso 12 — Checklist final y evidencias
 
@@ -65,3 +65,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - Paso 11 (adelantado antes del Paso 10, que depende de Cami en Postman): README con sección "Parte 2 · Retos avanzados" (modelo, auth con curl, tabla de endpoints, paginación/búsqueda, likes 409, correo log/Mailtrap sin credenciales, versionado y aviso honesto sobre el alias, Scribe /docs, tests, Postman) y "Preguntas guía" (borrador para revisión de Cami). .env.example con comentario de MAIL_* sin valores reales.
 - Paso 12: 4 checkers Opus de solo lectura (máx. 2 a la vez) sobre el árbol ef6e25d. auth-checker 6/6 PASS, data-checker 6/6 PASS, contract-checker 6/6 PASS (11 v1 + 11 alias + 2 v2), docs-checker 5/6 PASS + 1 FAIL leve (README decía "67 pruebas en tests/Feature"; son 66 + 1 Unit) → corregido. Comentario de cascada en destroy ahora menciona post_user. docs/EVIDENCIAS_PARTE2.md con las 32 capturas sugeridas. 67/67.
 - Pendiente de Cami: tag parte-1, correr el script de commits, Paso 10 (Postman + Mailtrap) y su commit `test: exportar colección de Postman de la parte 2`, y el push.
+- Paso 10: Cami hizo a mano las pruebas 1–5 (registros, logins, clave mala). Por pedido de Cami, Claude generó la colección completa (25 requests en 7 carpetas, variables base_url/token/token_b/post_id, auth Bearer a nivel de colección, scripts que guardan tokens y post_id, y un test por request) → facebook-api-parte2-postman-collection.json (sin tokens guardados). Validada con Newman 6.2.3 sobre BD limpia: 25 requests + 11 internas, 65 aserciones, 0 fallos; borrado verificado por terminal (0 archivos, 0 filas en post_images/comments/post_user). Cami la importa y la corre con el Collection Runner para las capturas.
