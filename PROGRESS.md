@@ -70,7 +70,7 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 ## Taller 3 · Despliegue (Docker + PostgreSQL en Render)
 
 - [x] Paso 0 — Preflight · `docs: agregar guía del taller 3`
-- [ ] Paso 1 — Laravel listo para PostgreSQL + A5 · `config: adaptar la configuración de base de datos a PostgreSQL` y `fix: búsqueda sin distinguir mayúsculas en PostgreSQL`
+- [x] Paso 1 — Laravel listo para PostgreSQL + A5 · `config: adaptar la configuración de base de datos a PostgreSQL` y `fix: búsqueda sin distinguir mayúsculas en PostgreSQL`
 - [ ] Paso 2 — Ajustes de producción (A2 + A4) · `fix: preparar la aplicación para producción en Render`
 - [ ] Paso 3 — Dockerfile, entrypoint y .dockerignore · `config: configurar Dockerfile, entrypoint y soporte PostgreSQL`
 - [ ] Paso 4 — Docker Compose + PostgreSQL local · `config: agregar docker-compose para pruebas locales con PostgreSQL`
@@ -84,3 +84,4 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 ### Notas Taller 3
 
 - Paso 0: git limpio, PHP 8.4.1, 67/67 (299 aserciones). Mac arm64. Docker Desktop instalado después: Docker 29.8.2, Compose v5.6.0, engine aarch64 (CLI en /usr/local/bin; terminales abiertas antes de instalar no lo ven hasta reabrirlas). Tag parte-2 creado y pusheado por Cami. Cuenta de Render creada. D1–D7 con defaults; región Oregon.
+- Paso 1: default pgsql; bloque pgsql con url DATABASE_URL→DB_URL (D6) y defaults forge/forge del taller (charset utf8, sslmode prefer, search_path public ya estaban, vía env con el mismo default). whereLike/orWhereLike en V1 y V2 (existe en Query\Builder; PostgresGrammar usa ILIKE). Test test_busqueda_no_distingue_mayusculas (v1 y v2): en SQLite solo documenta; la prueba real en pgsql es el Paso 4. 68/68.

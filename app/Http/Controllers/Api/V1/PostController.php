@@ -35,7 +35,7 @@ class PostController extends Controller
         // Paginado de a 10: data + current_page, last_page, per_page, total, links...
         $posts = Post::with(['user:id,name', 'images', 'comments'])
             ->when($request->search, fn ($q, $s) => $q->where(fn ($w) =>
-                $w->where('title', 'like', "%{$s}%")->orWhere('content', 'like', "%{$s}%")))
+                $w->whereLike('title', "%{$s}%")->orWhereLike('content', "%{$s}%")))
             ->latest()
             ->paginate(10)
             ->withQueryString()

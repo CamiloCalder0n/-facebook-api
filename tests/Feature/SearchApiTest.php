@@ -34,6 +34,19 @@ class SearchApiTest extends TestCase
             ->assertJsonPath('data.0.title', 'Clase de backend');
     }
 
+    public function test_busqueda_no_distingue_mayusculas(): void
+    {
+        // En SQLite LIKE ya ignora mayúsculas; whereLike() garantiza lo mismo en PostgreSQL (ILIKE)
+        Post::create(['title' => 'Viaje a Medellín', 'content' => 'Metro y arepas']);
+
+        foreach (['/api/posts?search=viaje', '/api/v2/posts?search=VIAJE'] as $url) {
+            $this->getJson($url)
+                ->assertStatus(200)
+                ->assertJsonCount(2, 'data')
+                ->assertJsonFragment(['title' => 'Viaje a Medellín']);
+        }
+    }
+
     public function test_busqueda_sin_coincidencias_devuelve_data_vacio(): void
     {
         $this->getJson('/api/posts?search=inexistente')

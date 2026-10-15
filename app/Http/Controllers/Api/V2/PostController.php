@@ -31,7 +31,7 @@ class PostController extends Controller
         $posts = Post::with(['user:id,name', 'images'])
             ->withCount('comments')
             ->when($request->search, fn ($q, $s) => $q->where(fn ($w) =>
-                $w->where('title', 'like', "%{$s}%")->orWhere('content', 'like', "%{$s}%")))
+                $w->whereLike('title', "%{$s}%")->orWhereLike('content', "%{$s}%")))
             ->latest()
             ->paginate(10)
             ->withQueryString();
