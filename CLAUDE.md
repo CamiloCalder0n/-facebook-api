@@ -125,3 +125,38 @@ posts (id, user_id FK nullable, title, content, likes_count, timestamps)
 
 `docs: agregar guía de la parte 2 del taller` · `feat: agregar registro e inicio de sesión con Sanctum` · `feat: proteger endpoints y asociar publicaciones y comentarios al usuario` · `feat: likes únicos por usuario con tabla pivote` · `feat: paginar el listado de publicaciones` · `feat: buscar publicaciones por título o contenido` · `feat: notificar por correo al dueño del post al comentar` · `feat: versionar la API en v1 y agregar v2` · `docs: documentar la API con Scribe` · `test: completar pruebas de la parte 2` (si aplica) · `test: exportar colección de Postman de la parte 2` · `docs: actualizar README con la parte 2`.
 Cami hace los commits. Claude deja una "foto" del árbol al final de cada paso (`git add -A && git write-tree`) para que Cami los cree en orden con el script de commits.
+
+## Taller 3 · Despliegue
+
+Guía: `docs/PASOS_CLAUDE_CODE_TALLER3.md`. Fuente: `docs/Taller_3_Despliegue_API_REST.md`. Alcance: solo lo que pide el taller + ajustes A1–A5.
+La Parte 2 queda congelada en el tag `parte-2` (lo crea Cami). Secretos (`APP_KEY`, password/URL de la BD de Render, tokens) **solo** en el panel de Render: nunca en el repo ni en el chat. `php artisan test` en verde al cerrar cada paso que toque código.
+
+### Decisiones confirmadas
+
+| # | Decisión |
+|---|---|
+| D1 | Tag `parte-2` sobre el último commit de la Parte 2 (lo hace Cami) |
+| D2 | Scribe pasa a `require` → `/docs` funciona en Render |
+| D3 | Producción con `MAIL_MAILER=log` (sin credenciales) |
+| D4 | BD `facebook-db-prod` · Web Service `laravel-facebook-api-prod` (sufijo `-cami` si el nombre está tomado) |
+| D5 | Región Oregon (US West) para la BD y el Web Service |
+| D6 | pgsql `'url' => env('DATABASE_URL', env('DB_URL'))`; conexión real con las variables separadas del taller |
+| D7 | Postman en producción: register/login → POST `/api/posts` 201 → GET `/api/posts` 200, Environment "Render · Producción". Colección completa solo si Cami lo pide |
+
+### Ajustes obligatorios
+
+| # | Ajuste |
+|---|---|
+| A1 | `FROM php:8.4-fpm` (Laravel 13 exige PHP ^8.3; el taller trae 8.2) |
+| A2 | Scribe en `require` (con `--no-dev`, `config/scribe.php` rompe `config:cache` del entrypoint) |
+| A3 | `.dockerignore`: `.env`, `.env.*` (menos `.env.example`), `.git`, `vendor`, `node_modules`, `database/*.sqlite`, `storage/logs/*`, `storage/app/public/*`, `public/storage`, `bootstrap/cache/*.php` |
+| A4 | `$middleware->trustProxies(at: '*')` → `image_url` con `https://` detrás del proxy de Render |
+| A5 | Búsqueda con `whereLike()` / `orWhereLike()` (en pgsql `LIKE` distingue mayúsculas) |
+
+### Avisos (se documentan en el README)
+
+- W1: Compose monta `./:/var/www`; el `config:cache` del entrypoint deja `bootstrap/cache/config.php` con `DB_HOST=db` → correr `php artisan optimize:clear` en local después.
+- W2: disco efímero en Render Free: las imágenes se pierden al redesplegar/dormir; los datos de PostgreSQL persisten.
+- W3: el diagrama dice "Nginx + PHP-FPM", pero el entrypoint del taller usa `php artisan serve`; se sigue el código.
+- W4: la BD Free de Render vence; revisar la fecha antes de la calificación.
+- W5: el commit del taller usa el tipo `config:`; se respeta.

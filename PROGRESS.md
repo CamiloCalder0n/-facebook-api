@@ -66,3 +66,21 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 - Paso 12: 4 checkers Opus de solo lectura (máx. 2 a la vez) sobre el árbol ef6e25d. auth-checker 6/6 PASS, data-checker 6/6 PASS, contract-checker 6/6 PASS (11 v1 + 11 alias + 2 v2), docs-checker 5/6 PASS + 1 FAIL leve (README decía "67 pruebas en tests/Feature"; son 66 + 1 Unit) → corregido. Comentario de cascada en destroy ahora menciona post_user. docs/EVIDENCIAS_PARTE2.md con las 32 capturas sugeridas. 67/67.
 - Pendiente de Cami: tag parte-1, correr el script de commits, Paso 10 (Postman + Mailtrap) y su commit `test: exportar colección de Postman de la parte 2`, y el push.
 - Paso 10: Cami hizo a mano las pruebas 1–5 (registros, logins, clave mala). Por pedido de Cami, Claude generó la colección completa (25 requests en 7 carpetas, variables base_url/token/token_b/post_id, auth Bearer a nivel de colección, scripts que guardan tokens y post_id, y un test por request) → facebook-api-parte2-postman-collection.json (sin tokens guardados). Validada con Newman 6.2.3 sobre BD limpia: 25 requests + 11 internas, 65 aserciones, 0 fallos; borrado verificado por terminal (0 archivos, 0 filas en post_images/comments/post_user). Cami la importa y la corre con el Collection Runner para las capturas.
+
+## Taller 3 · Despliegue (Docker + PostgreSQL en Render)
+
+- [x] Paso 0 — Preflight · `docs: agregar guía del taller 3`
+- [ ] Paso 1 — Laravel listo para PostgreSQL + A5 · `config: adaptar la configuración de base de datos a PostgreSQL` y `fix: búsqueda sin distinguir mayúsculas en PostgreSQL`
+- [ ] Paso 2 — Ajustes de producción (A2 + A4) · `fix: preparar la aplicación para producción en Render`
+- [ ] Paso 3 — Dockerfile, entrypoint y .dockerignore · `config: configurar Dockerfile, entrypoint y soporte PostgreSQL`
+- [ ] Paso 4 — Docker Compose + PostgreSQL local · `config: agregar docker-compose para pruebas locales con PostgreSQL`
+- [ ] Paso 5 — Push a GitHub (Cami)
+- [ ] Paso 6 — PostgreSQL en Render (Cami, guiado)
+- [ ] Paso 7 — Web Service y variables de entorno (Cami, guiado)
+- [ ] Paso 8 — Postman contra producción (Cami, guiado)
+- [ ] Paso 9 — README · `docs: documentar el despliegue con Docker y Render`
+- [ ] Paso 10 — Checklist final y evidencias · `docs: agregar lista de evidencias del taller 3`
+
+### Notas Taller 3
+
+- Paso 0: git limpio, PHP 8.4.1, 67/67 (299 aserciones). Mac arm64. Docker Desktop instalado después: Docker 29.8.2, Compose v5.6.0, engine aarch64 (CLI en /usr/local/bin; terminales abiertas antes de instalar no lo ven hasta reabrirlas). Tag parte-2 creado y pusheado por Cami. Cuenta de Render creada. D1–D7 con defaults; región Oregon.
