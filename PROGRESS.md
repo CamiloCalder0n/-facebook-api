@@ -71,9 +71,9 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 
 - [x] Paso 0 — Preflight · `docs: agregar guía del taller 3`
 - [x] Paso 1 — Laravel listo para PostgreSQL + A5 · `config: adaptar la configuración de base de datos a PostgreSQL` y `fix: búsqueda sin distinguir mayúsculas en PostgreSQL`
-- [ ] Paso 2 — Ajustes de producción (A2 + A4) · `fix: preparar la aplicación para producción en Render`
-- [ ] Paso 3 — Dockerfile, entrypoint y .dockerignore · `config: configurar Dockerfile, entrypoint y soporte PostgreSQL`
-- [ ] Paso 4 — Docker Compose + PostgreSQL local · `config: agregar docker-compose para pruebas locales con PostgreSQL`
+- [x] Paso 2 — Ajustes de producción (A2 + A4) · `fix: preparar la aplicación para producción en Render`
+- [x] Paso 3 — Dockerfile, entrypoint y .dockerignore · `config: configurar Dockerfile, entrypoint y soporte PostgreSQL`
+- [x] Paso 4 — Docker Compose + PostgreSQL local · `config: agregar docker-compose para pruebas locales con PostgreSQL`
 - [ ] Paso 5 — Push a GitHub (Cami)
 - [ ] Paso 6 — PostgreSQL en Render (Cami, guiado)
 - [ ] Paso 7 — Web Service y variables de entorno (Cami, guiado)
@@ -83,5 +83,8 @@ Detalle en `docs/PASOS_CLAUDE_CODE_PARTE2.md`.
 
 ### Notas Taller 3
 
-- Paso 0: git limpio, PHP 8.4.1, 67/67 (299 aserciones). Mac arm64. Docker Desktop instalado después: Docker 29.8.2, Compose v5.6.0, engine aarch64 (CLI en /usr/local/bin; terminales abiertas antes de instalar no lo ven hasta reabrirlas). Tag parte-2 creado y pusheado por Cami. Cuenta de Render creada. D1–D7 con defaults; región Oregon.
+- Paso 0: git limpio, PHP 8.4.1, 67/67 (299 aserciones). Mac arm64. Docker Desktop instalado después: Docker 29.8.2, Compose v5.6.0, engine aarch64 (CLI en ~/.docker/bin; terminales abiertas antes de instalar no lo ven hasta reabrirlas). Tag parte-2 creado y pusheado por Cami. Cuenta de Render creada. D1–D7 con defaults; región Oregon.
 - Paso 1: default pgsql; bloque pgsql con url DATABASE_URL→DB_URL (D6) y defaults forge/forge del taller (charset utf8, sslmode prefer, search_path public ya estaban, vía env con el mismo default). whereLike/orWhereLike en V1 y V2 (existe en Query\Builder; PostgresGrammar usa ILIKE). Test test_busqueda_no_distingue_mayusculas (v1 y v2): en SQLite solo documenta; la prueba real en pgsql es el Paso 4. 68/68.
+- Paso 2: composer require knuckleswtf/scribe:^5.11 (la misma 5.11.0): pasa de require-dev a require; composer.lock solo mueve paquetes de packages-dev a packages (mismas versiones, verificado). scribe:generate OK (solo cambió fecha/ids → revertido). trustProxies(at: '*') en bootstrap/app.php. 68/68.
+- Paso 3: Dockerfile igual al taller salvo FROM php:8.4-fpm (A1); build OK sin quitar extensiones (mbstring compiló). Imagen: PHP 8.4.26, pdo_pgsql/pgsql/mbstring/gd/zip/bcmath; sin .env, sin database.sqlite, storage/app/public vacío, sin phpunit (--no-dev) y con Scribe (A2). docker-entrypoint.sh igual al taller, LF, modo 100755 en git. .dockerignore (A3). Imagen local arm64; Render compila amd64.
+- Paso 4: docker-compose.yml igual al taller (aviso 'version obsolete', inofensivo). Logs: config/route/view cache, 10 migraciones DONE en pgsql, storage:link, servidor en 10000. Smoke en :8080: register 201, POST /api/posts con imagen 201, GET 200 (total 1), search=VIAJE 200 encuentra 'Viaje a Santander', imagen 200, /docs 200. psql: posts=1, users=1; LIKE '%VIAJE%' da 0 e ILIKE 1 (prueba real de A5). down sin -v (volumen facebook-api_pgdata conservado). W1 confirmado: quedaron config.php y routes-v7.php en bootstrap/cache; el primer optimize:clear falló a medias (cache:clear con la config del contenedor) y el segundo limpió todo. Hallazgo extra del montaje: storage:link del contenedor dejó public/storage → /var/www/storage/app/public (roto en el Mac); se arregla con rm public/storage && php artisan storage:link. Imagen de prueba borrada. 68/68.

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: facebook-api-app
+    container_name: facebook_app
+    restart: unless-stopped
+    ports:
+      - "8080:10000"
+    environment:
+      - PORT=10000
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=facebook_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=secret
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - db
+    networks:
+      - net
+
+  db:
+    image: postgres:15-alpine
+    container_name: facebook_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: facebook_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - net
+
+volumes:
+  pgdata:
+
+networks:
+  net:
+    driver: bridge
