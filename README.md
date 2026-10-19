@@ -3,6 +3,8 @@
 API RESTful que simula las interacciones básicas de una red social: **publicaciones con múltiples imágenes, comentarios y "Me gusta"**. Se validó con Postman y con pruebas automáticas (PHPUnit).
 
 > **Parte 1** (API básica, tag [`parte-1`](https://github.com/CamiloCalder0n/-facebook-api/tree/parte-1)) y **Parte 2** (retos avanzados: autenticación, likes por usuario, paginación, búsqueda, correo, versionado y documentación). Las secciones de Endpoints y Ejemplos describen la Parte 1; los cambios de la Parte 2 están en [Parte 2 · Retos avanzados](#parte-2--retos-avanzados).
+>
+> **Taller 3** (despliegue): la API está en producción en https://laravel-facebook-api-prod-wyhn.onrender.com, con Docker y PostgreSQL en Render. Ver [Taller 3 · Despliegue con Docker y Render](#taller-3--despliegue-con-docker-y-render).
 
 | | |
 |---|---|
@@ -512,6 +514,136 @@ Hay clientes (apps móviles, frontends, otros servicios) que ya dependen del for
 **7. ¿Por qué es más fácil mantener una API cuando la documentación está presente?**
 Otros desarrolladores (y uno mismo después de un tiempo) pueden usar la API sin leer el código: ven cada ruta, el método, el body, si pide token y qué respuestas y códigos devuelve. Con Scribe la documentación se genera desde el código, así que es más fácil mantenerla al día. Además trae ejemplos y una colección de Postman lista, y reduce las preguntas y los errores de integración.
 
+## Taller 3 · Despliegue con Docker y Render
+
+La API corre en producción en un contenedor Docker en **Render**, con una base de datos **PostgreSQL gestionada** por Render. La Parte 2 quedó congelada en el tag [`parte-2`](https://github.com/CamiloCalder0n/-facebook-api/tree/parte-2).
+
+**URL pública:** https://laravel-facebook-api-prod-wyhn.onrender.com
+
+| Ruta | Qué muestra |
+|---|---|
+| [`/up`](https://laravel-facebook-api-prod-wyhn.onrender.com/up) | Health check de Laravel (200) |
+| [`/api/posts`](https://laravel-facebook-api-prod-wyhn.onrender.com/api/posts) | Listado paginado de publicaciones |
+| [`/docs`](https://laravel-facebook-api-prod-wyhn.onrender.com/docs) | Documentación de la API (Scribe) |
+
+### Arquitectura
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  NUBE DE PRODUCCIÓN (RENDER)                 │
+│                                                              │
+│   ┌──────────────────────────┐    ┌───────────────────────┐  │
+│   │  Web Service (Docker)    │    │  PostgreSQL 18        │  │
+│   │  laravel-facebook-api-   │    │  facebook-db-prod     │  │
+│   │  prod                    │    │  (servicio gestionado)│  │
+│   │  ┌────────────────────┐  │    │                       │  │
+│   │  │ PHP 8.4            │  │    │                       │  │
+│   │  │ php artisan serve  │  │    │                       │  │
+│   │  │ Laravel API        │  │    │                       │  │
+│   │  └────────────────────┘  │    │                       │  │
+│   └────────────┬─────────────┘    └───────────▲───────────┘  │
+│                │      red interna (Oregon)    │              │
+│                └──────────────────────────────┘              │
+└──────────────────────────────▲───────────────────────────────┘
+                               │ HTTPS (443)
+                     ┌─────────┴─────────┐
+                     │ Cliente / Postman │
+                     └───────────────────┘
+```
+
+Dos diferencias con el diagrama del taller:
+
+- **PHP 8.4 en vez de 8.2:** Laravel 13 exige PHP 8.3 o superior, así que el `Dockerfile` usa `FROM php:8.4-fpm`.
+- **`php artisan serve` en vez de Nginx + PHP-FPM:** el diagrama habla de Nginx, pero el `docker-entrypoint.sh` del taller levanta la app con `php artisan serve` en el puerto 10000. Aquí se sigue el código del taller.
+
+Al arrancar, el contenedor corre `docker-entrypoint.sh`, que hace `config:cache`, `route:cache`, `view:cache`, `migrate --force` y `storage:link` y luego levanta el servidor.
+
+### Cambios para producción
+
+| Archivo | Cambio | Por qué |
+|---|---|---|
+| `config/database.php` | Conexión por defecto `pgsql` y `'url' => env('DATABASE_URL', env('DB_URL'))` | Producción usa PostgreSQL. En local, `.env` y `phpunit.xml` siguen en SQLite |
+| `PostController` (v1 y v2) | Búsqueda con `whereLike()` / `orWhereLike()` | En PostgreSQL `LIKE` distingue mayúsculas; `whereLike` usa `ILIKE` y la búsqueda funciona igual que en SQLite |
+| `composer.json` | Scribe pasa de `require-dev` a `require` | La imagen instala con `--no-dev`; sin Scribe, `config/scribe.php` rompe el `config:cache` del entrypoint y `/docs` no existiría |
+| `bootstrap/app.php` | `$middleware->trustProxies(at: '*')` | Render termina el HTTPS en su proxy; sin esto, Laravel arma las URLs (`image_url`, paginación) con `http://` |
+| `Dockerfile` | Imagen `php:8.4-fpm` con `pdo_pgsql`, `pgsql`, `mbstring`, `exif`, `pcntl`, `bcmath`, `gd`, `zip` y Composer | Contenedor de producción |
+| `docker-entrypoint.sh` | Cachés, migraciones, `storage:link` y servidor en el puerto 10000 | Se guarda con fin de línea LF y como ejecutable (`100755`) |
+| `.dockerignore` | Excluye `.env*` (menos `.env.example`), `.git`, `vendor`, `node_modules`, `database/*.sqlite`, logs, imágenes subidas, `public/storage` y `bootstrap/cache/*.php` | Ni secretos ni datos locales dentro de la imagen |
+| `docker-compose.yml` | App + PostgreSQL 15 para probar en local | Mismo motor que producción |
+
+### Probar en local con Docker Compose
+
+Requiere Docker Desktop.
+
+```bash
+docker compose up -d --build        # app en http://localhost:8080, PostgreSQL en el servicio "db"
+docker compose logs -f app          # esperar las migraciones en DONE y el servidor en el puerto 10000
+curl http://localhost:8080/up       # 200
+
+docker compose down                 # apaga sin borrar el volumen de datos (pgdata)
+php artisan optimize:clear          # ¡importante! ver el aviso de abajo
+```
+
+> **Aviso: después de usar Compose, limpia las cachés en local.** El `docker-compose.yml` monta la carpeta del proyecto (`./:/var/www`), así que lo que hace el entrypoint queda **en tu carpeta**:
+> - `config:cache` deja `bootstrap/cache/config.php` con `DB_HOST=db`. Si no se borra, `php artisan serve` y los tests intentan conectarse a la BD del contenedor. `php artisan optimize:clear` lo borra; a veces la primera pasada falla a medias y hay que correrlo dos veces.
+> - `storage:link` deja `public/storage` apuntando a `/var/www/storage/app/public`, una ruta que no existe en el Mac. Se arregla con `rm public/storage && php artisan storage:link`.
+
+### Despliegue en Render
+
+1. **Base de datos:** New → Postgres. Nombre `facebook-db-prod`, base `facebook_api`, usuario `fb_user`, región Oregon (US West), plan Free. Render le agrega un sufijo al nombre de la base; en `DB_DATABASE` va el nombre exacto que muestra el panel.
+2. **Web Service:** New → Web Service → este repositorio. Language **Docker**, rama `main`, región Oregon (la misma de la BD, para usar el host interno), plan Free.
+3. **Variables de entorno** (los valores se cargan solo en el panel de Render, nunca en el repositorio):
+
+| Variable | Valor / origen |
+|---|---|
+| `APP_NAME` | `FacebookAPI` |
+| `APP_ENV` | `production` |
+| `APP_DEBUG` | `false` |
+| `APP_KEY` | Se genera en local con `php artisan key:generate --show` 🔒 |
+| `APP_URL` | La URL pública que asigna Render, con `https://` |
+| `DB_CONNECTION` | `pgsql` |
+| `DB_HOST` | **Hostname interno** de la BD (panel de la BD → Connections) 🔒 |
+| `DB_PORT` | `5432` |
+| `DB_DATABASE` | Nombre de la base que muestra el panel 🔒 |
+| `DB_USERNAME` | Usuario de la BD 🔒 |
+| `DB_PASSWORD` | Contraseña de la BD 🔒 |
+| `MAIL_MAILER` | `log` (en producción no se envían correos reales) |
+| `LOG_CHANNEL` | `stderr` (los errores de Laravel salen en los Logs de Render) |
+
+4. **Deploy.** Render construye la imagen con el `Dockerfile` y redespliega solo con cada push a `main`. Si la URL final trae un sufijo (aquí `-wyhn`), hay que corregir `APP_URL` y redesplegar, porque con ella se arman las URLs de las imágenes.
+
+### Limitaciones del plan Free
+
+- **El servicio se duerme** tras unos 15 minutos sin tráfico. La primera petición después tarda unos 50 segundos.
+- **El disco del contenedor es efímero:** las imágenes subidas (`storage/app/public`) se pierden al redesplegar o cuando el servicio se duerme. Los registros en PostgreSQL sí persisten, así que un post puede quedar con una `image_url` que da 404. Para conservarlas haría falta un disco persistente (plan pago) o un almacenamiento externo tipo S3.
+- **La BD Free vence:** `facebook-db-prod` expira el **14 de noviembre de 2026**. Después hay que crear una nueva y actualizar las variables `DB_*`.
+
+### Solución de errores frecuentes
+
+| Error | Causa | Solución |
+|---|---|---|
+| `PDOException: could not find driver (pgsql)` | La imagen no tiene la extensión de PostgreSQL | El `Dockerfile` debe incluir `docker-php-ext-install pdo_pgsql pgsql`. Redesplegar |
+| Connection refused / timed out con la BD | `DB_HOST`, usuario o contraseña no coinciden con los de Render | Copiar los datos exactos del panel de la BD. Usar el host **interno** si la app y la BD están en la misma región |
+| `500 Server Error` | Falta `APP_KEY` en Render | Generarla con `php artisan key:generate --show` y agregarla a las variables |
+| El deploy falla en `config:cache` con un error de clase `Knuckles\Scribe\...` no encontrada | Scribe instalado en `require-dev`; la imagen usa `composer install --no-dev` | Scribe va en `require` |
+| `image_url` y links de paginación con `http://` | Laravel no confía en el proxy HTTPS de Render | `$middleware->trustProxies(at: '*')` en `bootstrap/app.php` |
+| La búsqueda no encuentra `VIAJE` pero sí `Viaje` | En PostgreSQL `LIKE` distingue mayúsculas | `whereLike()` / `orWhereLike()` |
+| `image_url` apunta a otro dominio | `APP_URL` no coincide con la URL real del servicio | Corregir `APP_URL` en Render y redesplegar |
+| En local, los tests o `php artisan serve` buscan el host `db` | Quedó la caché de configuración del contenedor | `php artisan optimize:clear` (ver el aviso de Compose) |
+| `422` al subir una foto del iPhone | El formato `.heic` no está permitido | Usar `jpeg`, `png`, `jpg` o `gif` de hasta 2 MB |
+
+### Pruebas en producción
+
+Con Postman, usando la colección de la Parte 2 y un Environment **"Render · Producción"** donde `base_url` apunta a la URL pública:
+
+| Request | Resultado |
+|---|---|
+| `POST /api/v1/register` | 201 |
+| `POST /api/v1/login` (guarda el token) | 200 |
+| `POST /api/v1/posts` con imagen | 201, `image_url` con `https://` |
+| `GET /api/posts` | 200 |
+| `GET /api/posts?search=CARTAGENA` | 200, encuentra "Mi viaje a Cartagena" |
+
 ## Evidencia de proceso (commits)
 
 El historial sigue **Conventional Commits** en español, un commit por cada bloque del taller:
@@ -548,3 +680,16 @@ En las pruebas con Postman no aparecieron errores de código, por eso no hay com
 | 10 | `docs: actualizar README con la parte 2` |
 | 11 | `fix: corregir conteo de pruebas en README y agregar lista de evidencias` |
 | 12 | `test: exportar colección de Postman de la parte 2` |
+
+### Taller 3
+
+| # | Commit |
+|---|---|
+| — | tag `parte-2` |
+| 0 | `docs: agregar guía del taller 3` |
+| 1 | `config: adaptar la configuración de base de datos a PostgreSQL` |
+| 1b | `fix: búsqueda sin distinguir mayúsculas en PostgreSQL` |
+| 2 | `fix: preparar la aplicación para producción en Render` |
+| 3 | `config: configurar Dockerfile, entrypoint y soporte PostgreSQL` |
+| 4 | `config: agregar docker-compose para pruebas locales con PostgreSQL` |
+| 5 | `docs: documentar el despliegue con Docker y Render` |
